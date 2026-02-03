@@ -71,7 +71,7 @@ export async function checkCopilotPRStatus(
             issue?: {
               number?: number;
               html_url?: string;
-              pull_request?: unknown;
+              pull_request?: object;
               draft?: boolean;
               user?: { login?: string; type?: string };
             };
@@ -91,7 +91,7 @@ export async function checkCopilotPRStatus(
               hasPR: true,
               prNumber: sourceIssue.number,
               prUrl: sourceIssue.html_url,
-              isDraft: sourceIssue.draft,
+              isDraft: sourceIssue.draft ?? false,
             };
           }
         }
