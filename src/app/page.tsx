@@ -1,65 +1,104 @@
-import Image from "next/image";
+import Link from "next/link";
+import { Github, Zap, Bell, GitPullRequest } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Navbar } from "@/components/layout/navbar";
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <main className="container">
+        {/* Hero Section */}
+        <section className="py-20 md:py-32 text-center">
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
+            Hunt Open Source Issues.
+            <br />
+            <span className="text-primary">Ship PRs Faster.</span>
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
+            Track your favorite open source projects, get notified instantly
+            when new issues appear, and let AI generate draft PRs for you.
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+          <div className="flex gap-4 justify-center">
+            <Link href="/api/auth/signin">
+              <Button size="lg" className="gap-2">
+                <Github className="h-5 w-5" />
+                Get Started with GitHub
+              </Button>
+            </Link>
+            <Link href="/dashboard">
+              <Button size="lg" variant="outline">
+                View Dashboard
+              </Button>
+            </Link>
+          </div>
+        </section>
+
+        {/* Features Section */}
+        <section className="py-20 border-t">
+          <h2 className="text-3xl font-bold text-center mb-12">
+            How It Works
+          </h2>
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="text-center p-6">
+              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <Github className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Watch Repositories</h3>
+              <p className="text-muted-foreground">
+                Add your favorite open source projects and configure filters
+                for the types of issues you want to work on.
+              </p>
+            </div>
+            <div className="text-center p-6">
+              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <Bell className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Real-time Notifications</h3>
+              <p className="text-muted-foreground">
+                Get instant notifications via webhooks when new issues are
+                created that match your criteria.
+              </p>
+            </div>
+            <div className="text-center p-6">
+              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <GitPullRequest className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">AI-Powered PRs</h3>
+              <p className="text-muted-foreground">
+                Copilot automatically generates draft PRs for new issues.
+                Review the code and publish when ready.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="py-20 border-t text-center">
+          <div className="bg-primary/5 rounded-2xl p-12">
+            <Zap className="h-12 w-12 text-primary mx-auto mb-4" />
+            <h2 className="text-3xl font-bold mb-4">
+              Ready to contribute to open source?
+            </h2>
+            <p className="text-muted-foreground mb-6">
+              Sign in with GitHub to start tracking issues and generating PRs.
+            </p>
+            <Link href="/api/auth/signin">
+              <Button size="lg" className="gap-2">
+                <Github className="h-5 w-5" />
+                Sign in with GitHub
+              </Button>
+            </Link>
+          </div>
+        </section>
       </main>
+
+      {/* Footer */}
+      <footer className="border-t py-8">
+        <div className="container text-center text-muted-foreground">
+          <p>Built with Next.js, Tailwind CSS, and GitHub Copilot</p>
+        </div>
+      </footer>
     </div>
   );
 }
