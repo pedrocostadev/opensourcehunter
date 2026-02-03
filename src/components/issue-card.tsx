@@ -135,26 +135,28 @@ export function IssueCard({ issue, onUpdate }: IssueCardProps) {
       onClick={markAsRead}
     >
       <CardHeader className="pb-2">
-        <div className="flex items-start justify-between gap-4">
-          <CardTitle className="text-base font-medium leading-tight">
-            <a
-              href={issue.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-start gap-2 hover:underline"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <span className="text-muted-foreground">#{issue.issueNumber}</span>
-              <span className="min-w-0 truncate">{issue.title}</span>
-              <ExternalLink className="h-4 w-4 flex-shrink-0 mt-0.5" aria-hidden="true" />
-            </a>
-          </CardTitle>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <CardTitle className="text-base font-medium leading-tight">
+              <a
+                href={issue.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex items-start gap-2 hover:underline"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <span className="shrink-0 text-muted-foreground">#{issue.issueNumber}</span>
+                <span className="line-clamp-2 break-words">{issue.title}</span>
+                <ExternalLink className="h-4 w-4 shrink-0 mt-0.5 opacity-70 group-hover:opacity-100" aria-hidden="true" />
+              </a>
+            </CardTitle>
+            <div className="mt-1 text-sm text-muted-foreground">
+              {issue.watchedRepo.owner}/{issue.watchedRepo.repo}
+            </div>
+          </div>
           {!issue.isRead && (
-            <Badge variant="default" className="flex-shrink-0">New</Badge>
+            <Badge variant="default" className="shrink-0">New</Badge>
           )}
-        </div>
-        <div className="text-sm text-muted-foreground">
-          {issue.watchedRepo.owner}/{issue.watchedRepo.repo}
         </div>
       </CardHeader>
       <CardContent>

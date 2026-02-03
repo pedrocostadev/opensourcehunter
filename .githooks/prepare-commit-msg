@@ -1,0 +1,18 @@
+#!/bin/sh
+# Add Copilot co-author to all commits
+
+COMMIT_MSG_FILE=$1
+COMMIT_SOURCE=$2
+
+# Don't add for merge commits or if already present
+if [ "$COMMIT_SOURCE" = "merge" ]; then
+  exit 0
+fi
+
+if grep -q "Co-authored-by: Copilot" "$COMMIT_MSG_FILE"; then
+  exit 0
+fi
+
+# Add blank line and co-author trailer
+echo "" >> "$COMMIT_MSG_FILE"
+echo "Co-authored-by: Copilot <175728472+Copilot@users.noreply.github.com>" >> "$COMMIT_MSG_FILE"
