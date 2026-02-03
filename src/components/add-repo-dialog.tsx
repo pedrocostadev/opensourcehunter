@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Plus } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Plus, Search, Star, Loader2, User, BookMarked } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,30 +24,122 @@ const COMMON_LABELS = [
   "documentation",
 ];
 
+type SearchType = "all" | "name" | "owner";
+
+interface SearchResult {
+  id: number;
+  full_name: string;
+  description: string | null;
+  stargazers_count: number;
+  language: string | null;
+  owner: { login: string; avatar_url: string };
+}
+
 interface AddRepoDialogProps {
   onRepoAdded: () => void;
 }
 
 export function AddRepoDialog({ onRepoAdded }: AddRepoDialogProps) {
   const [open, setOpen] = useState(false);
-  const [repoUrl, setRepoUrl] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchType, setSearchType] = useState<SearchType>("all");
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [currentQuery, setCurrentQuery] = useState("");
+  const [currentType, setCurrentType] = useState<SearchType>("all");
+  const [selectedRepo, setSelectedRepo] = useState<{ owner: string; repo: string } | null>(null);
   const [selectedLabels, setSelectedLabels] = useState<string[]>(["good first issue"]);
   const [isLoading, setIsLoading] = useState(false);
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
+  const resultsContainerRef = useRef<HTMLDivElement>(null);
 
-  const parseRepoUrl = (url: string): { owner: string; repo: string } | null => {
-    // Handle formats: owner/repo, github.com/owner/repo, https://github.com/owner/repo
-    const patterns = [
-      /^([^/]+)\/([^/]+)$/,
-      /github\.com\/([^/]+)\/([^/]+)/,
-    ];
-
-    for (const pattern of patterns) {
-      const match = url.trim().match(pattern);
-      if (match) {
-        return { owner: match[1], repo: match[2].replace(/\.git$/, "") };
-      }
+  const getEffectiveSearch = useCallback((query: string, type: SearchType): { query: string; type: SearchType } => {
+    // Auto-detect @ prefix for owner search
+    if (query.startsWith("@")) {
+      return { query: query.slice(1), type: "owner" };
     }
-    return null;
+    return { query, type };
+  }, []);
+
+  const fetchResults = useCallback(async (query: string, type: SearchType, pageNum: number, append: boolean = false) => {
+    const effective = getEffectiveSearch(query, type);
+    
+    if (pageNum === 1) {
+      setIsSearching(true);
+    } else {
+      setIsLoadingMore(true);
+    }
+
+    try {
+      const res = await fetch(
+        `/api/repos/search?q=${encodeURIComponent(effective.query)}&page=${pageNum}&type=${effective.type}`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (append) {
+          setSearchResults((prev) => [...prev, ...data.items]);
+        } else {
+          setSearchResults(data.items);
+        }
+        setHasMore(data.has_more);
+        setCurrentQuery(query);
+        setCurrentType(type);
+      }
+    } catch {
+      // Silently fail search
+    } finally {
+      setIsSearching(false);
+      setIsLoadingMore(false);
+    }
+  }, [getEffectiveSearch]);
+
+  useEffect(() => {
+    const effective = getEffectiveSearch(searchQuery, searchType);
+    
+    if (effective.query.trim().length < 2) {
+      setSearchResults([]);
+      setHasMore(false);
+      setPage(1);
+      return;
+    }
+
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    searchTimeoutRef.current = setTimeout(() => {
+      setPage(1);
+      fetchResults(searchQuery, searchType, 1, false);
+    }, 300);
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchQuery, searchType, fetchResults, getEffectiveSearch]);
+
+  const handleScroll = useCallback(() => {
+    const container = resultsContainerRef.current;
+    if (!container || isLoadingMore || !hasMore) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    if (scrollTop + clientHeight >= scrollHeight - 50) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      fetchResults(currentQuery, currentType, nextPage, true);
+    }
+  }, [isLoadingMore, hasMore, page, currentQuery, currentType, fetchResults]);
+
+  const selectRepo = (repo: SearchResult) => {
+    const [owner, repoName] = repo.full_name.split("/");
+    setSelectedRepo({ owner, repo: repoName });
+    setSearchQuery(repo.full_name);
+    setSearchResults([]);
+    setHasMore(false);
   };
 
   const toggleLabel = (label: string) => {
@@ -61,9 +153,25 @@ export function AddRepoDialog({ onRepoAdded }: AddRepoDialogProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const parsed = parseRepoUrl(repoUrl);
-    if (!parsed) {
-      toast.error("Invalid repository format. Use owner/repo or GitHub URL");
+    let repoToAdd = selectedRepo;
+
+    // If no repo selected from search, try to parse the input
+    if (!repoToAdd) {
+      const patterns = [
+        /^([^/]+)\/([^/]+)$/,
+        /github\.com\/([^/]+)\/([^/]+)/,
+      ];
+      for (const pattern of patterns) {
+        const match = searchQuery.trim().match(pattern);
+        if (match) {
+          repoToAdd = { owner: match[1], repo: match[2].replace(/\.git$/, "") };
+          break;
+        }
+      }
+    }
+
+    if (!repoToAdd) {
+      toast.error("Please select a repository or enter a valid owner/repo format");
       return;
     }
 
@@ -74,32 +182,46 @@ export function AddRepoDialog({ onRepoAdded }: AddRepoDialogProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          owner: parsed.owner,
-          repo: parsed.repo,
+          owner: repoToAdd.owner,
+          repo: repoToAdd.repo,
           labels: selectedLabels,
           languages: [],
         }),
       });
 
       if (res.ok) {
-        toast.success(`Now watching ${parsed.owner}/${parsed.repo}`);
+        toast.success(`Now watching ${repoToAdd.owner}/${repoToAdd.repo}`);
         setOpen(false);
-        setRepoUrl("");
+        setSearchQuery("");
+        setSelectedRepo(null);
         setSelectedLabels(["good first issue"]);
         onRepoAdded();
       } else {
         const data = await res.json();
         toast.error(data.error || "Failed to add repository");
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to add repository");
     } finally {
       setIsLoading(false);
     }
   };
 
+  const resetDialog = () => {
+    setSearchQuery("");
+    setSearchResults([]);
+    setSelectedRepo(null);
+    setSelectedLabels(["good first issue"]);
+    setHasMore(false);
+    setPage(1);
+    setSearchType("all");
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      setOpen(isOpen);
+      if (!isOpen) resetDialog();
+    }}>
       <DialogTrigger asChild>
         <Button>
           <Plus className="mr-2 h-4 w-4" />
@@ -111,19 +233,106 @@ export function AddRepoDialog({ onRepoAdded }: AddRepoDialogProps) {
           <DialogHeader>
             <DialogTitle>Add Repository to Watch</DialogTitle>
             <DialogDescription>
-              Enter a GitHub repository to monitor for new issues.
+              Search for a GitHub repository or enter owner/repo directly.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="repo">Repository</Label>
-              <Input
-                id="repo"
-                placeholder="owner/repo or https://github.com/owner/repo"
-                value={repoUrl}
-                onChange={(e) => setRepoUrl(e.target.value)}
-                required
-              />
+              <div className="flex gap-1 mb-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={searchType === "all" ? "default" : "outline"}
+                  onClick={() => setSearchType("all")}
+                >
+                  All
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={searchType === "name" ? "default" : "outline"}
+                  onClick={() => setSearchType("name")}
+                >
+                  <BookMarked className="h-3 w-3 mr-1" />
+                  By Name
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={searchType === "owner" ? "default" : "outline"}
+                  onClick={() => setSearchType("owner")}
+                >
+                  <User className="h-3 w-3 mr-1" />
+                  By Owner
+                </Button>
+              </div>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="repo"
+                  placeholder={
+                    searchType === "owner" 
+                      ? "Enter owner/org name (e.g., vercel)" 
+                      : searchType === "name"
+                      ? "Enter repository name"
+                      : "Search or use @owner (e.g., @vercel)"
+                  }
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setSelectedRepo(null);
+                  }}
+                  className="pl-9"
+                  required
+                />
+                {isSearching && (
+                  <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+                )}
+              </div>
+              {searchResults.length > 0 && (
+                <div 
+                  ref={resultsContainerRef}
+                  onScroll={handleScroll}
+                  className="max-h-[300px] overflow-y-auto rounded-md border bg-popover"
+                >
+                  {searchResults.map((repo) => (
+                    <button
+                      key={repo.id}
+                      type="button"
+                      className="flex w-full items-start gap-3 p-3 text-left hover:bg-accent transition-colors border-b last:border-b-0"
+                      onClick={() => selectRepo(repo)}
+                    >
+                      <img
+                        src={repo.owner.avatar_url}
+                        alt={repo.owner.login}
+                        className="h-8 w-8 rounded-full"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm">{repo.full_name}</div>
+                        {repo.description && (
+                          <div className="text-xs text-muted-foreground line-clamp-2">
+                            {repo.description}
+                          </div>
+                        )}
+                        <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Star className="h-3 w-3" />
+                            {repo.stargazers_count.toLocaleString()}
+                          </span>
+                          {repo.language && <span>{repo.language}</span>}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                  {isLoadingMore && (
+                    <div className="flex items-center justify-center p-3">
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      <span className="ml-2 text-sm text-muted-foreground">Loading more...</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <div className="grid gap-2">
               <Label>Filter by labels</Label>

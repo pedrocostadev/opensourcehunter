@@ -141,6 +141,123 @@ async function getPullRequestNodeId(
   return pr.node_id;
 }
 
+// Search for repositories on GitHub
+export async function searchRepos(
+  userId: string,
+  query: string,
+  perPage: number = 20,
+  page: number = 1,
+  searchType: "all" | "name" | "owner" = "all"
+): Promise<{
+  items: {
+    id: number;
+    full_name: string;
+    description: string | null;
+    stargazers_count: number;
+    language: string | null;
+    owner: { login: string; avatar_url: string };
+  }[];
+  total_count: number;
+  has_more: boolean;
+}> {
+  const octokit = await getUserOctokit(userId);
+
+  // Helper to fetch repos for a user/org
+  const fetchUserRepos = async (username: string, pg: number, limit: number) => {
+    try {
+      let data;
+      try {
+        const response = await octokit.rest.repos.listForUser({
+          username,
+          per_page: limit,
+          page: pg,
+          sort: "pushed",
+          direction: "desc",
+        });
+        data = response.data;
+      } catch {
+        const response = await octokit.rest.repos.listForOrg({
+          org: username,
+          per_page: limit,
+          page: pg,
+          sort: "pushed",
+          direction: "desc",
+        });
+        data = response.data;
+      }
+      return data.map((repo) => ({
+        id: repo.id,
+        full_name: repo.full_name,
+        description: repo.description ?? null,
+        stargazers_count: repo.stargazers_count ?? 0,
+        language: repo.language ?? null,
+        owner: {
+          login: repo.owner.login,
+          avatar_url: repo.owner.avatar_url,
+        },
+      }));
+    } catch {
+      return [];
+    }
+  };
+
+  // For owner search, list repos directly
+  if (searchType === "owner") {
+    const items = await fetchUserRepos(query, page, perPage);
+    const hasMore = items.length === perPage;
+    return {
+      items,
+      total_count: hasMore ? page * perPage + 1 : (page - 1) * perPage + items.length,
+      has_more: hasMore,
+    };
+  }
+
+  // Build search query based on type
+  let searchQuery = query;
+  if (searchType === "name") {
+    searchQuery = `${query} in:name`;
+  }
+
+  const { data } = await octokit.rest.search.repos({
+    q: searchQuery,
+    per_page: perPage,
+    page,
+    sort: "stars",
+    order: "desc",
+  });
+
+  let items = data.items
+    .filter((repo) => repo.owner !== null)
+    .map((repo) => ({
+      id: repo.id,
+      full_name: repo.full_name,
+      description: repo.description,
+      stargazers_count: repo.stargazers_count,
+      language: repo.language,
+      owner: {
+        login: repo.owner!.login,
+        avatar_url: repo.owner!.avatar_url,
+      },
+    }));
+
+  // For "all" search on first page, also check if query matches a username
+  if (searchType === "all" && page === 1 && /^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(query)) {
+    const userRepos = await fetchUserRepos(query, 1, 10);
+    if (userRepos.length > 0) {
+      // Merge user repos at the top, avoiding duplicates
+      const existingIds = new Set(items.map((r) => r.id));
+      const newRepos = userRepos.filter((r) => !existingIds.has(r.id));
+      items = [...newRepos, ...items];
+    }
+  }
+
+  return {
+    items,
+    total_count: data.total_count,
+    has_more: page * perPage < data.total_count,
+  };
+}
+
 // Validate repository exists and user has access
 export async function validateRepoAccess(
   userId: string,
