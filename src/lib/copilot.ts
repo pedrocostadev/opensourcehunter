@@ -82,12 +82,11 @@ export async function checkCopilotPRStatus(
         
         // Check if the cross-reference is from a PR
         if (sourceIssue?.pull_request && sourceIssue.number && sourceIssue.html_url) {
-          // Check if it's a Copilot-created PR
-          const isCopilotPR =
-            sourceIssue.user?.login?.toLowerCase().includes("copilot") ||
-            sourceIssue.user?.type === "Bot";
+          // Check if it's a Copilot-created PR (matches copilot, copilot-swe-agent[bot], etc.)
+          const login = sourceIssue.user?.login?.toLowerCase() || "";
+          const isCopilotPR = login.includes("copilot");
           
-          if (isCopilotPR || sourceIssue.draft) {
+          if (isCopilotPR) {
             return {
               hasPR: true,
               prNumber: sourceIssue.number,
