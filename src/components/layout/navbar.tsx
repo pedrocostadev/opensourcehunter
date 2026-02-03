@@ -19,19 +19,17 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center">
-        <div className="mr-4 flex">
-          <Link href="/" className="mr-6 flex items-center space-x-2">
-            <Github className="h-6 w-6" aria-hidden="true" />
-            <span className="font-bold">OpenSourceHunter</span>
-          </Link>
-        </div>
+      <div className="container flex h-14 items-center justify-between">
+        <Link href="/" className="flex items-center gap-2">
+          <Github className="h-6 w-6 shrink-0" aria-hidden="true" />
+          <span className="font-bold hidden sm:inline">OpenSourceHunter</span>
+        </Link>
 
-        <div className="flex flex-1 items-center justify-end space-x-4">
+        <div className="flex items-center gap-2">
           {session ? (
             <>
-              <Link href="/dashboard">
-                <Button variant="ghost">Dashboard</Button>
+              <Link href="/dashboard" className="hidden sm:block">
+                <Button variant="ghost" size="sm">Dashboard</Button>
               </Link>
               <NotificationBell />
               <DropdownMenu>
@@ -59,6 +57,11 @@ export function Navbar() {
                     </div>
                   </div>
                   <DropdownMenuSeparator />
+                  <Link href="/dashboard" className="sm:hidden">
+                    <DropdownMenuItem className="cursor-pointer">
+                      Dashboard
+                    </DropdownMenuItem>
+                  </Link>
                   <Link href="/dashboard/settings">
                     <DropdownMenuItem className="cursor-pointer">
                       <Settings className="mr-2 h-4 w-4" aria-hidden="true" />

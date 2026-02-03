@@ -139,9 +139,9 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="container py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold">Dashboard</h1>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
+          <div className="min-w-0">
+            <h1 className="text-3xl font-bold text-pretty">Dashboard</h1>
             <p className="text-muted-foreground">
               Track open source issues and auto-generate PRs
             </p>
@@ -150,20 +150,18 @@ export default function DashboardPage() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="issues">
-              Issues {unreadIssues.length > 0 && `(${unreadIssues.length} new)`}
-            </TabsTrigger>
-            <TabsTrigger value="drafts">
-              Draft PRs {drafts.length > 0 && `(${drafts.length})`}
-            </TabsTrigger>
-            <TabsTrigger value="archived">
-              Archived {archived.length > 0 && `(${archived.length})`}
-            </TabsTrigger>
-            <TabsTrigger value="repos">
-              Watched Repos ({repos.length})
-            </TabsTrigger>
-          </TabsList>
+          <div className="-mx-4 px-4 overflow-x-auto scrollbar-none sm:mx-0 sm:px-0 sm:overflow-visible">
+            <TabsList variant="line" className="w-max sm:w-fit border-b">
+              <TabsTrigger value="issues">
+                Issues {unreadIssues.length > 0 && `(${unreadIssues.length})`}
+              </TabsTrigger>
+              <TabsTrigger value="drafts">
+                Draft PRs {drafts.length > 0 && `(${drafts.length})`}
+              </TabsTrigger>
+              <TabsTrigger value="archived">Archived</TabsTrigger>
+              <TabsTrigger value="repos">Repos ({repos.length})</TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="issues" className="space-y-4">
             {issues.length === 0 ? (

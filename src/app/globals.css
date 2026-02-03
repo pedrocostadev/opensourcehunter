@@ -129,7 +129,14 @@
   @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
 }
 
-/* Better touch experience on mobile */
+/* Hide scrollbar for tab lists */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
 button,
 a,
 [role="button"] {

@@ -82,16 +82,16 @@ export function RepoCard({ repo, onDelete, onUpdate }: RepoCardProps) {
 
   return (
     <Card className={cn(repo.frozen && "opacity-60")}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-lg font-medium">
+      <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0 pb-2">
+        <CardTitle className="text-lg font-medium min-w-0">
           <a
             href={`https://github.com/${repo.owner}/${repo.repo}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 hover:underline"
           >
-            {repo.owner}/{repo.repo}
-            <ExternalLink className="h-4 w-4" aria-hidden="true" />
+            <span className="truncate">{repo.owner}/{repo.repo}</span>
+            <ExternalLink className="h-4 w-4 shrink-0" aria-hidden="true" />
           </a>
         </CardTitle>
         <div className="flex items-center gap-2">
