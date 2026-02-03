@@ -61,6 +61,17 @@ export default function DashboardPage() {
     }
   }, [session]);
 
+  // Poll for new data every 30 seconds
+  useEffect(() => {
+    if (!session) return;
+
+    const interval = setInterval(() => {
+      fetchDataSilently();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [session]);
+
   const fetchData = async () => {
     setIsLoading(true);
     try {
@@ -77,6 +88,23 @@ export default function DashboardPage() {
       console.error("Failed to fetch data:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Silent refresh without loading state
+  const fetchDataSilently = async () => {
+    try {
+      const [reposRes, issuesRes, draftsRes] = await Promise.all([
+        fetch("/api/repos"),
+        fetch("/api/issues"),
+        fetch("/api/drafts"),
+      ]);
+
+      if (reposRes.ok) setRepos(await reposRes.json());
+      if (issuesRes.ok) setIssues(await issuesRes.json());
+      if (draftsRes.ok) setDrafts(await draftsRes.json());
+    } catch (error) {
+      console.error("Failed to fetch data:", error);
     }
   };
 
