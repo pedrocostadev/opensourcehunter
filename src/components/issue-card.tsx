@@ -32,18 +32,18 @@ interface IssueCardProps {
 }
 
 const statusIcons: Record<string, React.ReactNode> = {
-  queued: <Clock className="h-4 w-4 text-yellow-500" />,
-  generating: <Wrench className="h-4 w-4 text-blue-500 animate-spin" />,
-  draft_ready: <Check className="h-4 w-4 text-green-500" />,
-  published: <Check className="h-4 w-4 text-green-700" />,
-  rejected: <X className="h-4 w-4 text-red-500" />,
-  failed: <X className="h-4 w-4 text-red-500" />,
-  skipped: <Clock className="h-4 w-4 text-gray-500" />,
+  queued: <Clock className="h-4 w-4 text-yellow-500" aria-hidden="true" />,
+  generating: <Wrench className="h-4 w-4 text-blue-500 animate-spin" aria-hidden="true" />,
+  draft_ready: <Check className="h-4 w-4 text-green-500" aria-hidden="true" />,
+  published: <Check className="h-4 w-4 text-green-700" aria-hidden="true" />,
+  rejected: <X className="h-4 w-4 text-red-500" aria-hidden="true" />,
+  failed: <X className="h-4 w-4 text-red-500" aria-hidden="true" />,
+  skipped: <Clock className="h-4 w-4 text-gray-500" aria-hidden="true" />,
 };
 
 const statusLabels: Record<string, string> = {
   queued: "Queued for auto-fix",
-  generating: "Generating PR...",
+  generating: "Generating PR…",
   draft_ready: "Draft PR ready",
   published: "PR published",
   rejected: "Rejected",
@@ -145,8 +145,8 @@ export function IssueCard({ issue, onUpdate }: IssueCardProps) {
               onClick={(e) => e.stopPropagation()}
             >
               <span className="text-muted-foreground">#{issue.issueNumber}</span>
-              {issue.title}
-              <ExternalLink className="h-4 w-4 flex-shrink-0 mt-0.5" />
+              <span className="min-w-0 truncate">{issue.title}</span>
+              <ExternalLink className="h-4 w-4 flex-shrink-0 mt-0.5" aria-hidden="true" />
             </a>
           </CardTitle>
           {!issue.isRead && (
@@ -191,7 +191,7 @@ export function IssueCard({ issue, onUpdate }: IssueCardProps) {
               <>
                 <Link href={`/drafts/${issue.id}`}>
                   <Button size="sm" variant="outline">
-                    <Eye className="mr-1 h-3 w-3" />
+                    <Eye className="mr-1 h-3 w-3" aria-hidden="true" />
                     Review
                   </Button>
                 </Link>

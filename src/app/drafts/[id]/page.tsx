@@ -128,7 +128,7 @@ export default function DraftReviewPage() {
             href="/dashboard"
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             Back to Dashboard
           </Link>
 
@@ -145,15 +145,15 @@ export default function DraftReviewPage() {
                 onClick={handleReject}
                 disabled={isRejecting || isPublishing}
               >
-                <X className="mr-2 h-4 w-4" />
-                {isRejecting ? "Rejecting..." : "Reject"}
+                <X className="mr-2 h-4 w-4" aria-hidden="true" />
+                {isRejecting ? "Rejecting…" : "Reject"}
               </Button>
               <Button
                 onClick={handlePublish}
                 disabled={isPublishing || isRejecting}
               >
-                <Check className="mr-2 h-4 w-4" />
-                {isPublishing ? "Publishing..." : "Publish PR"}
+                <Check className="mr-2 h-4 w-4" aria-hidden="true" />
+                {isPublishing ? "Publishing…" : "Publish PR"}
               </Button>
             </div>
           </div>
@@ -190,7 +190,7 @@ export default function DraftReviewPage() {
                     className="text-sm text-primary hover:underline flex items-center gap-1"
                   >
                     View Issue #{draft.issueNumber}
-                    <ExternalLink className="h-3 w-3" />
+                    <ExternalLink className="h-3 w-3" aria-hidden="true" />
                   </a>
                 </div>
 
@@ -221,7 +221,7 @@ export default function DraftReviewPage() {
                   className="text-primary hover:underline flex items-center gap-1"
                 >
                   PR #{draft.draftPrNumber}
-                  <ExternalLink className="h-3 w-3" />
+                  <ExternalLink className="h-3 w-3" aria-hidden="true" />
                 </a>
                 <p className="text-sm text-muted-foreground mt-2">
                   This is a draft PR created by Copilot. Review the changes and

@@ -123,3 +123,16 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Container with consistent padding */
+.container {
+  @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+}
+
+/* Better touch experience on mobile */
+button,
+a,
+[role="button"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}

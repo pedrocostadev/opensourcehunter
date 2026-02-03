@@ -10,7 +10,7 @@ export default function Home() {
       <main className="container">
         {/* Hero Section */}
         <section className="py-20 md:py-32 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 text-balance">
             Hunt Open Source Issues.
             <br />
             <span className="text-primary">Ship PRs Faster.</span>
@@ -22,7 +22,7 @@ export default function Home() {
           <div className="flex gap-4 justify-center">
             <Link href="/api/auth/signin">
               <Button size="lg" className="gap-2">
-                <Github className="h-5 w-5" />
+                <Github className="h-5 w-5" aria-hidden="true" />
                 Get Started with GitHub
               </Button>
             </Link>
@@ -42,7 +42,7 @@ export default function Home() {
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center p-6">
               <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <Github className="h-6 w-6 text-primary" />
+                <Github className="h-6 w-6 text-primary" aria-hidden="true" />
               </div>
               <h3 className="text-xl font-semibold mb-2">Watch Repositories</h3>
               <p className="text-muted-foreground">
@@ -52,9 +52,9 @@ export default function Home() {
             </div>
             <div className="text-center p-6">
               <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <Bell className="h-6 w-6 text-primary" />
+                <Bell className="h-6 w-6 text-primary" aria-hidden="true" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Real-time Notifications</h3>
+              <h3 className="text-xl font-semibold mb-2">Real-Time Notifications</h3>
               <p className="text-muted-foreground">
                 Get instant notifications via webhooks when new issues are
                 created that match your criteria.
@@ -62,7 +62,7 @@ export default function Home() {
             </div>
             <div className="text-center p-6">
               <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <GitPullRequest className="h-6 w-6 text-primary" />
+                <GitPullRequest className="h-6 w-6 text-primary" aria-hidden="true" />
               </div>
               <h3 className="text-xl font-semibold mb-2">AI-Powered PRs</h3>
               <p className="text-muted-foreground">
@@ -76,17 +76,17 @@ export default function Home() {
         {/* CTA Section */}
         <section className="py-20 border-t text-center">
           <div className="bg-primary/5 rounded-2xl p-12">
-            <Zap className="h-12 w-12 text-primary mx-auto mb-4" />
-            <h2 className="text-3xl font-bold mb-4">
-              Ready to contribute to open source?
+            <Zap className="h-12 w-12 text-primary mx-auto mb-4" aria-hidden="true" />
+            <h2 className="text-3xl font-bold mb-4 text-balance">
+              Ready to Contribute to Open Source?
             </h2>
             <p className="text-muted-foreground mb-6">
               Sign in with GitHub to start tracking issues and generating PRs.
             </p>
             <Link href="/api/auth/signin">
               <Button size="lg" className="gap-2">
-                <Github className="h-5 w-5" />
-                Sign in with GitHub
+                <Github className="h-5 w-5" aria-hidden="true" />
+                Sign In with GitHub
               </Button>
             </Link>
           </div>

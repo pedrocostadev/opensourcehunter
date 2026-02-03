@@ -22,7 +22,7 @@ export function Navbar() {
       <div className="container flex h-14 items-center">
         <div className="mr-4 flex">
           <Link href="/" className="mr-6 flex items-center space-x-2">
-            <Github className="h-6 w-6" />
+            <Github className="h-6 w-6" aria-hidden="true" />
             <span className="font-bold">OpenSourceHunter</span>
           </Link>
         </div>
@@ -36,9 +36,9 @@ export function Navbar() {
               <NotificationBell />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full" aria-label="User menu">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={session.user?.image || ""} alt={session.user?.name || ""} />
+                      <AvatarImage src={session.user?.image || ""} alt="" />
                       <AvatarFallback>
                         {session.user?.name?.charAt(0) || "U"}
                       </AvatarFallback>
@@ -63,8 +63,8 @@ export function Navbar() {
                     className="cursor-pointer"
                     onClick={() => signOut({ callbackUrl: "/" })}
                   >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Sign out
+                    <LogOut className="mr-2 h-4 w-4" aria-hidden="true" />
+                    Sign Out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -72,8 +72,8 @@ export function Navbar() {
           ) : (
             <Link href="/api/auth/signin">
               <Button>
-                <Github className="mr-2 h-4 w-4" />
-                Sign in with GitHub
+                <Github className="mr-2 h-4 w-4" aria-hidden="true" />
+                Sign In with GitHub
               </Button>
             </Link>
           )}

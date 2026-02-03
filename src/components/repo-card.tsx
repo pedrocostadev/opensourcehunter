@@ -62,13 +62,13 @@ export function RepoCard({ repo, onDelete }: RepoCardProps) {
             className="flex items-center gap-2 hover:underline"
           >
             {repo.owner}/{repo.repo}
-            <ExternalLink className="h-4 w-4" />
+            <ExternalLink className="h-4 w-4" aria-hidden="true" />
           </a>
         </CardTitle>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <MoreVertical className="h-4 w-4" />
+            <Button variant="ghost" size="icon" aria-label="Repository options">
+              <MoreVertical className="h-4 w-4" aria-hidden="true" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -77,7 +77,7 @@ export function RepoCard({ repo, onDelete }: RepoCardProps) {
               onClick={handleDelete}
               disabled={isDeleting}
             >
-              <Trash2 className="mr-2 h-4 w-4" />
+              <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
               Remove
             </DropdownMenuItem>
           </DropdownMenuContent>

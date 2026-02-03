@@ -78,11 +78,11 @@ export function DiffViewer({ owner, repo, prNumber }: DiffViewerProps) {
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <span className="font-medium">{files.length} files changed</span>
-        <Badge variant="secondary" className="text-green-600">
+        <Badge variant="secondary" className="text-green-600 tabular-nums">
           +{files.reduce((sum, f) => sum + f.additions, 0)}
         </Badge>
-        <Badge variant="secondary" className="text-red-600">
-          -{files.reduce((sum, f) => sum + f.deletions, 0)}
+        <Badge variant="secondary" className="text-red-600 tabular-nums">
+          −{files.reduce((sum, f) => sum + f.deletions, 0)}
         </Badge>
       </div>
 
@@ -105,8 +105,8 @@ export function DiffViewer({ owner, repo, prNumber }: DiffViewerProps) {
                 >
                   {file.status}
                 </Badge>
-                <span className="text-green-600 text-sm">+{file.additions}</span>
-                <span className="text-red-600 text-sm">-{file.deletions}</span>
+                <span className="text-green-600 text-sm tabular-nums">+{file.additions}</span>
+                <span className="text-red-600 text-sm tabular-nums">−{file.deletions}</span>
               </div>
             </div>
           </CardHeader>
