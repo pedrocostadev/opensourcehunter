@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/poll-copilot",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/poll-issues",
+      "schedule": "*/5 * * * *"
     }
   ]
 }
