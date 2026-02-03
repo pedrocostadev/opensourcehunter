@@ -46,10 +46,35 @@ model User {
   accounts      Account[]
   sessions      Session[]
 
-  watchedRepos  WatchedRepo[]
-  notifications Notification[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  watchedRepos            WatchedRepo[]
+  notifications           Notification[]
+  notificationPreferences NotificationPreferences?
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+}
+
+model NotificationPreferences {
+  id        String @id @default(cuid())
+  userId    String @unique
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Master toggles
+  emailEnabled Boolean @default(false)
+  pushEnabled  Boolean @default(false)
+
+  // Per-type email preferences
+  newIssueEmail    Boolean @default(true)
+  draftReadyEmail  Boolean @default(true)
+
+  // Per-type push preferences
+  newIssuePush     Boolean @default(true)
+  draftReadyPush   Boolean @default(true)
+
+  // Web Push subscription data (JSON)
+  pushSubscription String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model VerificationToken {

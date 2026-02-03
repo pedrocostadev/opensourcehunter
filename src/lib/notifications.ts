@@ -1,4 +1,8 @@
 import { prisma } from "./prisma";
+import {
+  dispatchIssueNotification,
+  dispatchDraftReadyNotification,
+} from "./notifications/dispatcher";
 
 export async function createNotification(
   userId: string,
@@ -20,10 +24,14 @@ export async function createIssueNotification(
   repo: string,
   issueNumber: number,
   issueTitle: string,
-  issueId: string
+  issueId: string,
+  issueUrl?: string
 ) {
-  const message = `New issue in ${owner}/${repo}: #${issueNumber} - ${issueTitle}`;
-  return createNotification(userId, message, issueId);
+  const url = issueUrl || `https://github.com/${owner}/${repo}/issues/${issueNumber}`;
+  return dispatchIssueNotification(
+    { userId, issueId },
+    { owner, repo, issueNumber, issueTitle, issueUrl: url }
+  );
 }
 
 export async function createDraftReadyNotification(
@@ -32,10 +40,13 @@ export async function createDraftReadyNotification(
   repo: string,
   issueNumber: number,
   prNumber: number,
-  issueId: string
+  issueId: string,
+  draftId?: string
 ) {
-  const message = `Draft PR #${prNumber} ready for review: ${owner}/${repo} issue #${issueNumber}`;
-  return createNotification(userId, message, issueId);
+  return dispatchDraftReadyNotification(
+    { userId, issueId },
+    { owner, repo, issueNumber, prNumber, draftId: draftId || issueId }
+  );
 }
 
 export async function getUnreadCount(userId: string): Promise<number> {
