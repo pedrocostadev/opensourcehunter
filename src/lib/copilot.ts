@@ -45,7 +45,7 @@ export async function assignIssueToCopilot(
   }
 }
 
-// Check if Copilot has created a PR for an issue
+// Check if Copilot has created a PR for an issue using timeline API
 export async function checkCopilotPRStatus(
   userId: string,
   owner: string,
@@ -55,41 +55,46 @@ export async function checkCopilotPRStatus(
   const octokit = await getUserOctokit(userId);
 
   try {
-    // Search for PRs that mention this issue
-    const { data: prs } = await octokit.rest.pulls.list({
+    // Use timeline API to find cross-referenced PRs (most reliable method)
+    const { data: timeline } = await octokit.rest.issues.listEventsForTimeline({
       owner,
       repo,
-      state: "open",
+      issue_number: issueNumber,
       per_page: 100,
     });
 
-    // Look for PRs that reference the issue (Copilot typically mentions the issue in the body)
-    for (const pr of prs) {
-      const body = pr.body || "";
-      const title = pr.title || "";
-      
-      // Check if PR references the issue
-      const issueRef = `#${issueNumber}`;
-      const fullIssueUrl = `https://github.com/${owner}/${repo}/issues/${issueNumber}`;
-      
-      if (
-        body.includes(issueRef) ||
-        body.includes(fullIssueUrl) ||
-        title.includes(issueRef)
-      ) {
-        // Check if it's a Copilot-created PR (user will be 'github-copilot[bot]' or similar)
-        const isCopilotPR = 
-          pr.user?.login?.includes("copilot") ||
-          pr.user?.type === "Bot" ||
-          body.toLowerCase().includes("copilot");
-
-        if (isCopilotPR || pr.draft) {
-          return {
-            hasPR: true,
-            prNumber: pr.number,
-            prUrl: pr.html_url,
-            isDraft: pr.draft,
+    // Look for cross-reference events from PRs
+    for (const event of timeline) {
+      if (event.event === "cross-referenced") {
+        const crossRefEvent = event as {
+          source?: {
+            issue?: {
+              number?: number;
+              html_url?: string;
+              pull_request?: unknown;
+              draft?: boolean;
+              user?: { login?: string; type?: string };
+            };
           };
+        };
+        
+        const sourceIssue = crossRefEvent.source?.issue;
+        
+        // Check if the cross-reference is from a PR
+        if (sourceIssue?.pull_request && sourceIssue.number && sourceIssue.html_url) {
+          // Check if it's a Copilot-created PR
+          const isCopilotPR =
+            sourceIssue.user?.login?.toLowerCase().includes("copilot") ||
+            sourceIssue.user?.type === "Bot";
+          
+          if (isCopilotPR || sourceIssue.draft) {
+            return {
+              hasPR: true,
+              prNumber: sourceIssue.number,
+              prUrl: sourceIssue.html_url,
+              isDraft: sourceIssue.draft,
+            };
+          }
         }
       }
     }
