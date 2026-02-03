@@ -16,6 +16,7 @@ interface WatchedRepo {
   repo: string;
   labels: string;
   languages: string;
+  frozen: boolean;
   createdAt: string;
   _count: {
     trackedIssues: number;
@@ -46,6 +47,7 @@ export default function DashboardPage() {
   const [issues, setIssues] = useState<TrackedIssue[]>([]);
   const [drafts, setDrafts] = useState<TrackedIssue[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("issues");
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -112,7 +114,7 @@ export default function DashboardPage() {
           <AddRepoDialog onRepoAdded={fetchData} />
         </div>
 
-        <Tabs defaultValue="issues" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList>
             <TabsTrigger value="issues">
               Issues {unreadIssues.length > 0 && `(${unreadIssues.length} new)`}
@@ -170,7 +172,7 @@ export default function DashboardPage() {
             ) : (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {repos.map((repo) => (
-                  <RepoCard key={repo.id} repo={repo} onDelete={fetchData} />
+                  <RepoCard key={repo.id} repo={repo} onDelete={fetchData} onUpdate={fetchData} />
                 ))}
               </div>
             )}

@@ -67,6 +67,7 @@ model WatchedRepo {
   repo      String   // e.g., "react"
   languages String   // JSON array of languages to filter
   labels    String   // JSON array of labels to filter (e.g., "good-first-issue")
+  frozen    Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
