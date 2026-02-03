@@ -109,12 +109,15 @@ model TrackedIssue {
   title         String
   url           String
   labels        String    // JSON array
+  state         String    @default("open") // open | closed
   isRead        Boolean   @default(false)
   claimedAt     DateTime? // User is working on this manually
   autoFixStatus String    @default("queued") // queued | generating | draft_ready | published | rejected | failed | skipped
   draftPrUrl    String?
   draftPrNumber Int?
   publishedAt   DateTime?
+  closedAt      DateTime?
+  archivedAt    DateTime?
   createdAt     DateTime  @default(now())
   notifiedAt    DateTime?
 

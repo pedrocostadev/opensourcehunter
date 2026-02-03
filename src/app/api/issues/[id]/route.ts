@@ -40,3 +40,35 @@ export async function PATCH(
 
   return NextResponse.json(updatedIssue);
 }
+
+// DELETE /api/issues/[id] - Permanently delete an issue
+export async function DELETE(
+  request: Request,
+  { params }: { params: Params }
+) {
+  const session = await getServerSession(authOptions);
+  const { id } = await params;
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const issue = await prisma.trackedIssue.findFirst({
+    where: {
+      id,
+      watchedRepo: {
+        userId: session.user.id,
+      },
+    },
+  });
+
+  if (!issue) {
+    return NextResponse.json({ error: "Issue not found" }, { status: 404 });
+  }
+
+  await prisma.trackedIssue.delete({
+    where: { id },
+  });
+
+  return NextResponse.json({ success: true });
+}

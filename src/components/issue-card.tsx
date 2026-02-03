@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ExternalLink, Check, X, Clock, Wrench, Eye } from "lucide-react";
+import { ExternalLink, Check, X, Clock, Wrench, Eye, RotateCcw, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,11 +14,13 @@ interface TrackedIssue {
   title: string;
   url: string;
   labels: string;
+  state: string;
   isRead: boolean;
   claimedAt: string | null;
   autoFixStatus: string;
   draftPrUrl: string | null;
   draftPrNumber: number | null;
+  archivedAt: string | null;
   createdAt: string;
   watchedRepo: {
     owner: string;
@@ -29,6 +31,7 @@ interface TrackedIssue {
 interface IssueCardProps {
   issue: TrackedIssue;
   onUpdate: () => void;
+  showArchiveActions?: boolean;
 }
 
 const statusIcons: Record<string, React.ReactNode> = {
@@ -51,9 +54,10 @@ const statusLabels: Record<string, string> = {
   skipped: "Working on it",
 };
 
-export function IssueCard({ issue, onUpdate }: IssueCardProps) {
+export function IssueCard({ issue, onUpdate, showArchiveActions = false }: IssueCardProps) {
   const [isLoading, setIsLoading] = useState(false);
   const labels = JSON.parse(issue.labels || "[]") as string[];
+  const isClosed = issue.state === "closed";
 
   const handleClaim = async () => {
     setIsLoading(true);
@@ -129,9 +133,39 @@ export function IssueCard({ issue, onUpdate }: IssueCardProps) {
     }
   };
 
+  const handleRestore = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/issues/${issue.id}/restore`, { method: "POST" });
+      if (res.ok) {
+        toast.success("Issue restored");
+        onUpdate();
+      }
+    } catch (error) {
+      toast.error("Failed to restore issue");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/issues/${issue.id}`, { method: "DELETE" });
+      if (res.ok) {
+        toast.success("Issue removed");
+        onUpdate();
+      }
+    } catch (error) {
+      toast.error("Failed to remove issue");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Card
-      className={`transition-colors ${!issue.isRead ? "border-primary/50 bg-primary/5" : ""}`}
+      className={`transition-colors ${!issue.isRead ? "border-primary/50 bg-primary/5" : ""} ${isClosed ? "opacity-75" : ""}`}
       onClick={markAsRead}
     >
       <CardHeader className="pb-2">
@@ -142,7 +176,7 @@ export function IssueCard({ issue, onUpdate }: IssueCardProps) {
                 href={issue.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex items-start gap-2 hover:underline"
+                className={`group flex items-start gap-2 hover:underline ${isClosed ? "line-through text-muted-foreground" : ""}`}
                 onClick={(e) => e.stopPropagation()}
               >
                 <span className="shrink-0 text-muted-foreground">#{issue.issueNumber}</span>
@@ -154,9 +188,14 @@ export function IssueCard({ issue, onUpdate }: IssueCardProps) {
               {issue.watchedRepo.owner}/{issue.watchedRepo.repo}
             </div>
           </div>
-          {!issue.isRead && (
-            <Badge variant="default" className="shrink-0">New</Badge>
-          )}
+          <div className="flex shrink-0 gap-1">
+            {isClosed && (
+              <Badge variant="secondary">Closed</Badge>
+            )}
+            {!issue.isRead && (
+              <Badge variant="default">New</Badge>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -231,6 +270,30 @@ export function IssueCard({ issue, onUpdate }: IssueCardProps) {
               >
                 Unclaim
               </Button>
+            )}
+
+            {showArchiveActions && (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleRestore}
+                  disabled={isLoading}
+                >
+                  <RotateCcw className="mr-1 h-3 w-3" aria-hidden="true" />
+                  Restore
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={handleDelete}
+                  disabled={isLoading}
+                  className="text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="mr-1 h-3 w-3" aria-hidden="true" />
+                  Remove
+                </Button>
+              </>
             )}
           </div>
         </div>

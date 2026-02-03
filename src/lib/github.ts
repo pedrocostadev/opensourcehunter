@@ -258,6 +258,27 @@ export async function searchRepos(
   };
 }
 
+// Fetch a single issue's current state
+export async function fetchIssueState(
+  userId: string,
+  owner: string,
+  repo: string,
+  issueNumber: number
+): Promise<{ state: "open" | "closed"; closedAt: string | null }> {
+  const octokit = await getUserOctokit(userId);
+
+  const { data: issue } = await octokit.rest.issues.get({
+    owner,
+    repo,
+    issue_number: issueNumber,
+  });
+
+  return {
+    state: issue.state as "open" | "closed",
+    closedAt: issue.closed_at,
+  };
+}
+
 // Validate repository exists and user has access
 export async function validateRepoAccess(
   userId: string,

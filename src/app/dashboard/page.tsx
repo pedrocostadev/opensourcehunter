@@ -29,11 +29,13 @@ interface TrackedIssue {
   title: string;
   url: string;
   labels: string;
+  state: string;
   isRead: boolean;
   claimedAt: string | null;
   autoFixStatus: string;
   draftPrUrl: string | null;
   draftPrNumber: number | null;
+  archivedAt: string | null;
   createdAt: string;
   watchedRepo: {
     owner: string;
@@ -46,6 +48,7 @@ export default function DashboardPage() {
   const [repos, setRepos] = useState<WatchedRepo[]>([]);
   const [issues, setIssues] = useState<TrackedIssue[]>([]);
   const [drafts, setDrafts] = useState<TrackedIssue[]>([]);
+  const [archived, setArchived] = useState<TrackedIssue[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("issues");
 
@@ -75,15 +78,17 @@ export default function DashboardPage() {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [reposRes, issuesRes, draftsRes] = await Promise.all([
+      const [reposRes, issuesRes, draftsRes, archivedRes] = await Promise.all([
         fetch("/api/repos"),
         fetch("/api/issues"),
         fetch("/api/drafts"),
+        fetch("/api/issues?archived=true"),
       ]);
 
       if (reposRes.ok) setRepos(await reposRes.json());
       if (issuesRes.ok) setIssues(await issuesRes.json());
       if (draftsRes.ok) setDrafts(await draftsRes.json());
+      if (archivedRes.ok) setArchived(await archivedRes.json());
     } catch (error) {
       console.error("Failed to fetch data:", error);
     } finally {
@@ -94,15 +99,17 @@ export default function DashboardPage() {
   // Silent refresh without loading state
   const fetchDataSilently = async () => {
     try {
-      const [reposRes, issuesRes, draftsRes] = await Promise.all([
+      const [reposRes, issuesRes, draftsRes, archivedRes] = await Promise.all([
         fetch("/api/repos"),
         fetch("/api/issues"),
         fetch("/api/drafts"),
+        fetch("/api/issues?archived=true"),
       ]);
 
       if (reposRes.ok) setRepos(await reposRes.json());
       if (issuesRes.ok) setIssues(await issuesRes.json());
       if (draftsRes.ok) setDrafts(await draftsRes.json());
+      if (archivedRes.ok) setArchived(await archivedRes.json());
     } catch (error) {
       console.error("Failed to fetch data:", error);
     }
@@ -150,6 +157,9 @@ export default function DashboardPage() {
             <TabsTrigger value="drafts">
               Draft PRs {drafts.length > 0 && `(${drafts.length})`}
             </TabsTrigger>
+            <TabsTrigger value="archived">
+              Archived {archived.length > 0 && `(${archived.length})`}
+            </TabsTrigger>
             <TabsTrigger value="repos">
               Watched Repos ({repos.length})
             </TabsTrigger>
@@ -184,6 +194,28 @@ export default function DashboardPage() {
               <div className="grid gap-4 md:grid-cols-2">
                 {drafts.map((issue) => (
                   <IssueCard key={issue.id} issue={issue} onUpdate={fetchData} />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="archived" className="space-y-4">
+            {archived.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <p className="text-lg">No archived issues</p>
+                <p className="text-sm">
+                  Closed issues will appear here automatically
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2">
+                {archived.map((issue) => (
+                  <IssueCard
+                    key={issue.id}
+                    issue={issue}
+                    onUpdate={fetchData}
+                    showArchiveActions
+                  />
                 ))}
               </div>
             )}

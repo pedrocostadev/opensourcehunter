@@ -14,6 +14,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status"); // filter by autoFixStatus
   const unreadOnly = searchParams.get("unread") === "true";
+  const archived = searchParams.get("archived") === "true";
 
   const issues = await prisma.trackedIssue.findMany({
     where: {
@@ -22,6 +23,8 @@ export async function GET(request: Request) {
       },
       ...(status && { autoFixStatus: status }),
       ...(unreadOnly && { isRead: false }),
+      // By default exclude archived, unless explicitly requested
+      archivedAt: archived ? { not: null } : null,
     },
     include: {
       watchedRepo: {

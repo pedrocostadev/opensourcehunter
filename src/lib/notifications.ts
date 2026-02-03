@@ -49,6 +49,18 @@ export async function createDraftReadyNotification(
   );
 }
 
+export async function createIssueClosedNotification(
+  userId: string,
+  owner: string,
+  repo: string,
+  issueNumber: number,
+  issueTitle: string,
+  issueId: string
+) {
+  const message = `Issue #${issueNumber} closed: ${issueTitle}`;
+  return createNotification(userId, message, issueId);
+}
+
 export async function getUnreadCount(userId: string): Promise<number> {
   return prisma.notification.count({
     where: {
