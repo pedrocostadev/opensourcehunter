@@ -273,32 +273,3 @@ export async function validateRepoAccess(
     return false;
   }
 }
-
-// Register a webhook for a repository
-export async function registerWebhook(
-  userId: string,
-  owner: string,
-  repo: string,
-  webhookUrl: string
-): Promise<{ id: number } | null> {
-  const octokit = await getUserOctokit(userId);
-
-  try {
-    const { data: webhook } = await octokit.rest.repos.createWebhook({
-      owner,
-      repo,
-      config: {
-        url: webhookUrl,
-        content_type: "json",
-        secret: process.env.GITHUB_WEBHOOK_SECRET,
-      },
-      events: ["issues"],
-      active: true,
-    });
-
-    return { id: webhook.id };
-  } catch (error) {
-    console.error("Failed to register webhook:", error);
-    return null;
-  }
-}

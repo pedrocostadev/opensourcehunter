@@ -56,8 +56,8 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-semibold mb-2">Real-Time Notifications</h3>
               <p className="text-muted-foreground">
-                Get instant notifications via webhooks when new issues are
-                created that match your criteria.
+                Get notified when new issues are created that match your
+                criteria via email, push, or in-app alerts.
               </p>
             </div>
             <div className="text-center p-6">
