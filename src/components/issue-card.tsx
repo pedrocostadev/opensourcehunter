@@ -210,10 +210,12 @@ export function IssueCard({ issue, onUpdate, showArchiveActions = false }: Issue
             </div>
           )}
 
-          <div className="flex items-center gap-2">
-            {statusIcons[issue.autoFixStatus]}
-            <span className="text-sm">{statusLabels[issue.autoFixStatus]}</span>
-          </div>
+          {!showArchiveActions && (
+            <div className="flex items-center gap-2">
+              {statusIcons[issue.autoFixStatus]}
+              <span className="text-sm">{statusLabels[issue.autoFixStatus]}</span>
+            </div>
+          )}
 
           {issue.draftPrUrl && issue.autoFixStatus === "draft_ready" && (
             <a
