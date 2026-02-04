@@ -96,6 +96,18 @@ export default function DashboardPage() {
     }
   };
 
+  const handleRepoAdded = (repo: {
+    id: string;
+    owner: string;
+    repo: string;
+    labels: string;
+    languages: string;
+    frozen: boolean;
+    createdAt: string;
+  }) => {
+    setRepos((prev) => [{ ...repo, _count: { trackedIssues: 0 } }, ...prev]);
+  };
+
   // Silent refresh without loading state
   const fetchDataSilently = async () => {
     try {
@@ -146,7 +158,7 @@ export default function DashboardPage() {
               Track open source issues and auto-generate PRs
             </p>
           </div>
-          <AddRepoDialog onRepoAdded={fetchData} />
+          <AddRepoDialog onRepoAdded={handleRepoAdded} />
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">

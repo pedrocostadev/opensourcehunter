@@ -35,8 +35,18 @@ interface SearchResult {
   owner: { login: string; avatar_url: string };
 }
 
+interface CreatedRepo {
+  id: string;
+  owner: string;
+  repo: string;
+  labels: string;
+  languages: string;
+  frozen: boolean;
+  createdAt: string;
+}
+
 interface AddRepoDialogProps {
-  onRepoAdded: () => void;
+  onRepoAdded: (repo: CreatedRepo) => void;
 }
 
 export function AddRepoDialog({ onRepoAdded }: AddRepoDialogProps) {
@@ -190,12 +200,13 @@ export function AddRepoDialog({ onRepoAdded }: AddRepoDialogProps) {
       });
 
       if (res.ok) {
+        const createdRepo = await res.json();
         toast.success(`Now watching ${repoToAdd.owner}/${repoToAdd.repo}`);
         setOpen(false);
         setSearchQuery("");
         setSelectedRepo(null);
         setSelectedLabels(["good first issue"]);
-        onRepoAdded();
+        onRepoAdded(createdRepo);
       } else {
         const data = await res.json();
         toast.error(data.error || "Failed to add repository");
