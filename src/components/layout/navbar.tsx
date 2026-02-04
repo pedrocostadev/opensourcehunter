@@ -15,7 +15,7 @@ import {
 import { NotificationBell } from "./notification-bell";
 
 export function Navbar() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -26,10 +26,10 @@ export function Navbar() {
         </Link>
 
         <div className="flex items-center gap-2">
-          {session ? (
+          {status === "loading" ? null : session ? (
             <>
               <Link href="/dashboard" className="hidden sm:block">
-                <Button variant="ghost" size="sm">Dashboard</Button>
+                <Button variant="secondary" size="sm">Dashboard</Button>
               </Link>
               <NotificationBell />
               <DropdownMenu>
@@ -80,7 +80,7 @@ export function Navbar() {
             </>
           ) : (
             <Link href="/api/auth/signin">
-              <Button>
+              <Button size="sm">
                 <Github className="mr-2 h-4 w-4" aria-hidden="true" />
                 Sign In with GitHub
               </Button>
