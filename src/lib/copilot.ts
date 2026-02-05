@@ -27,7 +27,7 @@ async function getCopilotActorId(
     const response = await octokit.graphql<{
       repository: {
         suggestedActors: {
-          nodes: Array<{ id: string; login: string }>;
+          nodes: Array<{ __typename: string; id?: string; login: string }>;
         };
       };
     }>(
@@ -36,8 +36,20 @@ async function getCopilotActorId(
         repository(owner: $owner, name: $repo) {
           suggestedActors(capabilities: [CAN_BE_ASSIGNED], first: 100) {
             nodes {
-              id
+              __typename
               login
+              ... on Bot {
+                id
+              }
+              ... on User {
+                id
+              }
+              ... on Mannequin {
+                id
+              }
+              ... on Organization {
+                id
+              }
             }
           }
         }
@@ -55,6 +67,10 @@ async function getCopilotActorId(
     const copilotActor = response.repository.suggestedActors.nodes.find(
       (actor) => actor.login.toLowerCase() === "copilot"
     );
+
+    if (!copilotActor?.id) {
+      console.log("Available actors:", response.repository.suggestedActors.nodes.map(a => a.login));
+    }
 
     return copilotActor?.id || null;
   } catch (error) {
