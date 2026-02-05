@@ -23,6 +23,7 @@ export async function GET(request: Request) {
 
     let issuesCreated = 0;
     let reposPolled = 0;
+    const autofixTriggers: Promise<unknown>[] = [];
 
     // Group by owner/repo to avoid duplicate API calls
     const repoGroups = new Map<string, typeof watchedRepos>();
@@ -116,16 +117,20 @@ export async function GET(request: Request) {
               issue.html_url
             );
 
-            // Trigger Copilot auto-fix in background
-            triggerCopilotAutoFix(trackedIssue.id).catch((error) => {
-              console.error("Failed to trigger Copilot auto-fix:", error);
-            });
+            // Trigger Copilot auto-fix (awaited before response)
+            autofixTriggers.push(
+              triggerCopilotAutoFix(trackedIssue.id).catch((error) => {
+                console.error("Failed to trigger Copilot auto-fix:", error);
+              })
+            );
           }
         }
       } catch (error) {
         console.error(`Failed to poll ${repoKey}:`, error);
       }
     }
+
+    await Promise.allSettled(autofixTriggers);
 
     return NextResponse.json({
       reposPolled,

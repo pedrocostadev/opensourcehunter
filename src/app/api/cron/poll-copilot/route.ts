@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { pollCopilotPRStatus } from "@/lib/copilot";
+import { pollCopilotPRStatus, triggerCopilotAutoFix } from "@/lib/copilot";
 
 // This endpoint can be called by Vercel Cron or external cron service
 // to check if Copilot has created PRs for issues that are "generating"
@@ -13,14 +13,23 @@ export async function GET(request: Request) {
   }
 
   try {
+    // Retry stuck "queued" issues (safety net for missed triggers)
+    const queuedIssues = await prisma.trackedIssue.findMany({
+      where: { autoFixStatus: "queued" },
+      select: { id: true },
+    });
+
+    if (queuedIssues.length > 0) {
+      console.log(`Retrying ${queuedIssues.length} stuck queued issues`);
+      await Promise.allSettled(
+        queuedIssues.map((issue) => triggerCopilotAutoFix(issue.id))
+      );
+    }
+
     // Find all issues that are in "generating" status
     const generatingIssues = await prisma.trackedIssue.findMany({
-      where: {
-        autoFixStatus: "generating",
-      },
-      select: {
-        id: true,
-      },
+      where: { autoFixStatus: "generating" },
+      select: { id: true },
     });
 
     console.log(`Polling ${generatingIssues.length} issues for Copilot PR status`);
@@ -34,6 +43,7 @@ export async function GET(request: Request) {
     const failed = results.filter((r) => r.status === "rejected").length;
 
     return NextResponse.json({
+      retriedQueued: queuedIssues.length,
       polled: generatingIssues.length,
       successful,
       failed,

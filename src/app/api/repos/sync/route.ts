@@ -23,6 +23,7 @@ export async function POST() {
 
     let issuesCreated = 0;
     let reposPolled = 0;
+    const autofixTriggers: Promise<unknown>[] = [];
 
     for (const watched of watchedRepos) {
       reposPolled++;
@@ -92,15 +93,19 @@ export async function POST() {
 
           issuesCreated++;
 
-          // Trigger Copilot auto-fix in background
-          triggerCopilotAutoFix(trackedIssue.id).catch((error) => {
-            console.error("Failed to trigger Copilot auto-fix:", error);
-          });
+          // Trigger Copilot auto-fix (awaited before response)
+          autofixTriggers.push(
+            triggerCopilotAutoFix(trackedIssue.id).catch((error) => {
+              console.error("Failed to trigger Copilot auto-fix:", error);
+            })
+          );
         }
       } catch (error) {
         console.error(`Failed to sync ${watched.owner}/${watched.repo}:`, error);
       }
     }
+
+    await Promise.allSettled(autofixTriggers);
 
     return NextResponse.json({
       reposPolled,
