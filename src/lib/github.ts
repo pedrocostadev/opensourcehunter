@@ -17,6 +17,75 @@ async function getUserOctokit(userId: string): Promise<Octokit> {
   return new Octokit({ auth: account.access_token });
 }
 
+// Get the authenticated user's GitHub username
+export async function getGitHubUsername(userId: string): Promise<string> {
+  const octokit = await getUserOctokit(userId);
+  const { data: user } = await octokit.rest.users.getAuthenticated();
+  return user.login;
+}
+
+// Check if user owns the repository (has write/admin access)
+export async function checkRepoOwnership(
+  userId: string,
+  owner: string,
+  repo: string
+): Promise<{ isOwned: boolean; permission: string }> {
+  const octokit = await getUserOctokit(userId);
+
+  try {
+    const { data: repoData } = await octokit.rest.repos.get({ owner, repo });
+    
+    // Check permissions - user owns if they have push/admin access
+    const permissions = repoData.permissions;
+    const isOwned = permissions?.push || permissions?.admin || false;
+    
+    return {
+      isOwned,
+      permission: permissions?.admin ? "admin" : permissions?.push ? "push" : "read",
+    };
+  } catch {
+    return { isOwned: false, permission: "none" };
+  }
+}
+
+// Fork a repository to the user's account
+export async function forkRepository(
+  userId: string,
+  owner: string,
+  repo: string
+): Promise<{ forkOwner: string; forkRepo: string }> {
+  const octokit = await getUserOctokit(userId);
+
+  // Check if fork already exists
+  const username = await getGitHubUsername(userId);
+  
+  try {
+    // Try to get existing fork
+    const { data: existingFork } = await octokit.rest.repos.get({
+      owner: username,
+      repo,
+    });
+    
+    // Check if it's actually a fork of the target repo
+    if (existingFork.fork && existingFork.parent?.full_name === `${owner}/${repo}`) {
+      return { forkOwner: username, forkRepo: repo };
+    }
+  } catch {
+    // Fork doesn't exist, create it
+  }
+
+  // Create the fork
+  const { data: fork } = await octokit.rest.repos.createFork({
+    owner,
+    repo,
+  });
+
+  // Wait a bit for GitHub to fully create the fork
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+
+  return { forkOwner: fork.owner.login, forkRepo: fork.name };
+}
+
 // Fetch issues from a repository
 export async function fetchRepoIssues(
   userId: string,

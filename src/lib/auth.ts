@@ -23,6 +23,21 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
+    async signIn({ user, account, profile }) {
+      // Store GitHub username when user signs in
+      if (account?.provider === "github" && profile) {
+        const githubProfile = profile as { login?: string };
+        if (githubProfile.login && user.id) {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { githubUsername: githubProfile.login },
+          }).catch(() => {
+            // User may not exist yet on first sign in, adapter will create it
+          });
+        }
+      }
+      return true;
+    },
   },
   pages: {
     signIn: "/auth/signin",

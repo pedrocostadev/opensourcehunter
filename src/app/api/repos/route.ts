@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { checkRepoOwnership, forkRepository, getGitHubUsername, validateRepoAccess } from "@/lib/github";
 
 // GET /api/repos - List user's watched repos
 export async function GET() {
@@ -43,6 +44,44 @@ export async function POST(request: Request) {
   }
 
   try {
+    // Validate repo exists and user has access
+    const hasAccess = await validateRepoAccess(session.user.id, owner, repo);
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: "Repository not found or not accessible" },
+        { status: 404 }
+      );
+    }
+
+    // Check if user owns the repo (has push access)
+    const { isOwned } = await checkRepoOwnership(session.user.id, owner, repo);
+
+    let forkOwner: string | null = null;
+
+    if (!isOwned) {
+      // User doesn't own the repo - need to fork it for Copilot to create PRs
+      try {
+        const fork = await forkRepository(session.user.id, owner, repo);
+        forkOwner = fork.forkOwner;
+      } catch (error) {
+        console.error("Failed to fork repository:", error);
+        return NextResponse.json(
+          { error: "Failed to fork repository. Please try again." },
+          { status: 500 }
+        );
+      }
+    }
+
+    // Ensure user's GitHub username is stored
+    const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+    if (!user?.githubUsername) {
+      const username = await getGitHubUsername(session.user.id);
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { githubUsername: username },
+      });
+    }
+
     const watchedRepo = await prisma.watchedRepo.create({
       data: {
         userId: session.user.id,
@@ -50,6 +89,8 @@ export async function POST(request: Request) {
         repo,
         languages: JSON.stringify(languages),
         labels: JSON.stringify(labels),
+        isOwned,
+        forkOwner,
       },
     });
 

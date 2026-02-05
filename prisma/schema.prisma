@@ -38,13 +38,14 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  accounts      Account[]
-  sessions      Session[]
+  id             String    @id @default(cuid())
+  name           String?
+  email          String?   @unique
+  emailVerified  DateTime?
+  image          String?
+  githubUsername String?   // GitHub login/username for fork operations
+  accounts       Account[]
+  sessions       Session[]
 
   watchedRepos            WatchedRepo[]
   notifications           Notification[]
@@ -88,11 +89,13 @@ model VerificationToken {
 model WatchedRepo {
   id        String   @id @default(cuid())
   userId    String
-  owner     String   // e.g., "facebook"
+  owner     String   // e.g., "facebook" (original repo owner)
   repo      String   // e.g., "react"
   languages String   // JSON array of languages to filter
   labels    String   // JSON array of labels to filter (e.g., "good-first-issue")
   frozen    Boolean  @default(false)
+  isOwned   Boolean  @default(false) // True if user owns the repo (no fork needed)
+  forkOwner String?  // If forked, the owner of the fork (user's GitHub username)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -103,23 +106,26 @@ model WatchedRepo {
 }
 
 model TrackedIssue {
-  id            String    @id @default(cuid())
-  watchedRepoId String
-  issueNumber   Int
-  title         String
-  url           String
-  labels        String    // JSON array
-  state         String    @default("open") // open | closed
-  isRead        Boolean   @default(false)
-  claimedAt     DateTime? // User is working on this manually
-  autoFixStatus String    @default("queued") // queued | generating | draft_ready | published | rejected | failed | skipped
-  draftPrUrl    String?
-  draftPrNumber Int?
-  publishedAt   DateTime?
-  closedAt      DateTime?
-  archivedAt    DateTime?
-  createdAt     DateTime  @default(now())
-  notifiedAt    DateTime?
+  id              String    @id @default(cuid())
+  watchedRepoId   String
+  issueNumber     Int
+  title           String
+  url             String
+  labels          String    // JSON array
+  state           String    @default("open") // open | closed
+  isRead          Boolean   @default(false)
+  claimedAt       DateTime? // User is working on this manually
+  autoFixStatus   String    @default("queued") // queued | generating | draft_ready | published | rejected | failed | skipped
+  forkIssueNumber Int?      // For non-owned repos: issue number on the fork
+  draftPrUrl      String?
+  draftPrNumber   Int?
+  draftPrOwner    String?   // Owner of repo where PR exists (may be fork owner)
+  generatingAt    DateTime? // When Copilot assignment started (for timeout detection)
+  publishedAt     DateTime?
+  closedAt        DateTime?
+  archivedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  notifiedAt      DateTime?
 
   watchedRepo   WatchedRepo    @relation(fields: [watchedRepoId], references: [id], onDelete: Cascade)
   notifications Notification[]

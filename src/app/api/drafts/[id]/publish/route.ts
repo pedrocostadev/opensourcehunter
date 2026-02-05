@@ -40,10 +40,13 @@ export async function POST(
   }
 
   try {
+    // Use the stored PR owner (could be fork owner or original repo owner)
+    const prOwner = draft.draftPrOwner || draft.watchedRepo.owner;
+    
     // Publish the draft PR on GitHub
     await publishDraftPR(
       session.user.id,
-      draft.watchedRepo.owner,
+      prOwner,
       draft.watchedRepo.repo,
       draft.draftPrNumber
     );
