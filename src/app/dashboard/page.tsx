@@ -9,6 +9,8 @@ import { RepoCard } from "@/components/repo-card";
 import { IssueCard } from "@/components/issue-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 
 interface WatchedRepo {
   id: string;
@@ -50,6 +52,7 @@ export default function DashboardPage() {
   const [drafts, setDrafts] = useState<TrackedIssue[]>([]);
   const [archived, setArchived] = useState<TrackedIssue[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [activeTab, setActiveTab] = useState("issues");
 
   useEffect(() => {
@@ -74,6 +77,21 @@ export default function DashboardPage() {
 
     return () => clearInterval(interval);
   }, [session]);
+
+  const syncIssues = async () => {
+    setIsSyncing(true);
+    try {
+      const res = await fetch("/api/repos/sync", { method: "POST" });
+      if (res.ok) {
+        // Refresh data after sync
+        await fetchData();
+      }
+    } catch (error) {
+      console.error("Failed to sync:", error);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -158,7 +176,18 @@ export default function DashboardPage() {
               Track open source issues and auto-generate PRs
             </p>
           </div>
-          <AddRepoDialog onRepoAdded={handleRepoAdded} />
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={syncIssues} 
+              disabled={isSyncing || repos.length === 0}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? "animate-spin" : ""}`} />
+              {isSyncing ? "Syncing..." : "Sync Issues"}
+            </Button>
+            <AddRepoDialog onRepoAdded={handleRepoAdded} />
+          </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
