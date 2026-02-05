@@ -65,7 +65,7 @@ async function getCopilotActorId(
     );
 
     const copilotActor = response.repository.suggestedActors.nodes.find(
-      (actor) => actor.login.toLowerCase() === "copilot"
+      (actor) => actor.login.toLowerCase() === "copilot" || actor.login.toLowerCase() === "copilot-swe-agent"
     );
 
     if (!copilotActor?.id) {
