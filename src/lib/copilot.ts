@@ -1,5 +1,6 @@
 import { Octokit } from "octokit";
 import { prisma } from "./prisma";
+import { createDraftReadyNotification } from "./notifications";
 
 // Get user's GitHub access token from the database
 async function getUserOctokit(userId: string): Promise<Octokit> {
@@ -363,14 +364,19 @@ export async function triggerCopilotAutoFix(
     return false;
   }
 
-  // Update status to generating with timestamp
-  await prisma.trackedIssue.update({
-    where: { id: trackedIssueId },
-    data: { 
+  // Atomic check-and-update to prevent duplicate triggers from concurrent cron runs
+  const { count } = await prisma.trackedIssue.updateMany({
+    where: { id: trackedIssueId, autoFixStatus: "queued" },
+    data: {
       autoFixStatus: "generating",
       generatingAt: new Date(),
     },
   });
+
+  if (count === 0) {
+    // Another process already moved it out of "queued"
+    return false;
+  }
 
   try {
     const result = await assignIssueToCopilot(
@@ -461,13 +467,14 @@ export async function pollCopilotPRStatus(
       },
     });
 
-    // Create notification for draft ready
-    await prisma.notification.create({
-      data: {
-        userId: trackedIssue.watchedRepo.userId,
-        issueId: trackedIssueId,
-        message: `Draft PR #${status.prNumber} ready for review: ${trackedIssue.watchedRepo.owner}/${trackedIssue.watchedRepo.repo} issue #${trackedIssue.issueNumber}`,
-      },
-    });
+    // Create notification for draft ready (dispatches to all enabled channels)
+    await createDraftReadyNotification(
+      trackedIssue.watchedRepo.userId,
+      trackedIssue.watchedRepo.owner,
+      trackedIssue.watchedRepo.repo,
+      trackedIssue.issueNumber,
+      status.prNumber,
+      trackedIssueId
+    );
   }
 }

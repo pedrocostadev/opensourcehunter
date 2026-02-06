@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { fetchRepoIssues, issueHasLinkedPR } from "@/lib/github";
 import { triggerCopilotAutoFix } from "@/lib/copilot";
+import { createIssueNotification } from "@/lib/notifications";
 
 // POST /api/repos/sync - Manually trigger issue sync for user's repos
 export async function POST() {
@@ -92,6 +93,17 @@ export async function POST() {
           });
 
           issuesCreated++;
+
+          // Create notification (dispatches to all enabled channels)
+          await createIssueNotification(
+            watched.userId,
+            watched.owner,
+            watched.repo,
+            issue.number,
+            issue.title,
+            trackedIssue.id,
+            issue.html_url
+          );
 
           // Trigger Copilot auto-fix (awaited before response)
           autofixTriggers.push(

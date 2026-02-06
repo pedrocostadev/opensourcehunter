@@ -61,7 +61,7 @@ export function AddRepoDialog({ onRepoAdded }: AddRepoDialogProps) {
   const [currentQuery, setCurrentQuery] = useState("");
   const [currentType, setCurrentType] = useState<SearchType>("all");
   const [selectedRepo, setSelectedRepo] = useState<{ owner: string; repo: string } | null>(null);
-  const [selectedLabels, setSelectedLabels] = useState<string[]>(["good first issue"]);
+  const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
   const resultsContainerRef = useRef<HTMLDivElement>(null);
@@ -205,7 +205,7 @@ export function AddRepoDialog({ onRepoAdded }: AddRepoDialogProps) {
         setOpen(false);
         setSearchQuery("");
         setSelectedRepo(null);
-        setSelectedLabels(["good first issue"]);
+        setSelectedLabels([]);
         onRepoAdded(createdRepo);
       } else {
         const data = await res.json();
@@ -222,7 +222,7 @@ export function AddRepoDialog({ onRepoAdded }: AddRepoDialogProps) {
     setSearchQuery("");
     setSearchResults([]);
     setSelectedRepo(null);
-    setSelectedLabels(["good first issue"]);
+    setSelectedLabels([]);
     setHasMore(false);
     setPage(1);
     setSearchType("all");
