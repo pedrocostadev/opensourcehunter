@@ -41,6 +41,7 @@ interface CreatedRepo {
   repo: string;
   labels: string;
   languages: string;
+  titleQuery: string | null;
   frozen: boolean;
   createdAt: string;
 }
@@ -62,6 +63,7 @@ export function AddRepoDialog({ onRepoAdded }: AddRepoDialogProps) {
   const [currentType, setCurrentType] = useState<SearchType>("all");
   const [selectedRepo, setSelectedRepo] = useState<{ owner: string; repo: string } | null>(null);
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
+  const [titleQuery, setTitleQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
   const resultsContainerRef = useRef<HTMLDivElement>(null);
@@ -196,6 +198,7 @@ export function AddRepoDialog({ onRepoAdded }: AddRepoDialogProps) {
           repo: repoToAdd.repo,
           labels: selectedLabels,
           languages: [],
+          titleQuery: titleQuery.trim() || undefined,
         }),
       });
 
@@ -223,6 +226,7 @@ export function AddRepoDialog({ onRepoAdded }: AddRepoDialogProps) {
     setSearchResults([]);
     setSelectedRepo(null);
     setSelectedLabels([]);
+    setTitleQuery("");
     setHasMore(false);
     setPage(1);
     setSearchType("all");
@@ -374,6 +378,20 @@ export function AddRepoDialog({ onRepoAdded }: AddRepoDialogProps) {
               </div>
               <p className="text-xs text-muted-foreground">
                 Only issues with these labels will be tracked
+              </p>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="titleQuery">Filter by title</Label>
+              <Input
+                id="titleQuery"
+                placeholder="e.g. memory leak"
+                value={titleQuery}
+                onChange={(e) => setTitleQuery(e.target.value)}
+                autoComplete="off"
+                spellCheck={false}
+              />
+              <p className="text-xs text-muted-foreground">
+                Only issues whose title contains this text will be tracked
               </p>
             </div>
           </div>

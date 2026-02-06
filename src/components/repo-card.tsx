@@ -20,6 +20,7 @@ interface WatchedRepo {
   repo: string;
   labels: string;
   languages: string;
+  titleQuery: string | null;
   frozen: boolean;
   createdAt: string;
   _count: {
@@ -150,6 +151,11 @@ export function RepoCard({ repo, onDelete, onUpdate }: RepoCardProps) {
                   {label}
                 </Badge>
               ))}
+            </div>
+          )}
+          {repo.titleQuery && (
+            <div className="text-sm text-muted-foreground">
+              Title: &ldquo;{repo.titleQuery}&rdquo;
             </div>
           )}
         </div>

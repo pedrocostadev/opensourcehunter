@@ -93,6 +93,7 @@ model WatchedRepo {
   repo      String   // e.g., "react"
   languages String   // JSON array of languages to filter
   labels    String   // JSON array of labels to filter (e.g., "good-first-issue")
+  titleQuery String?  // Case-insensitive substring match on issue titles
   frozen    Boolean  @default(false)
   isOwned   Boolean  @default(false) // True if user owns the repo (no fork needed)
   forkOwner String?  // If forked, the owner of the fork (user's GitHub username)

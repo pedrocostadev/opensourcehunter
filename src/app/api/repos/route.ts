@@ -34,7 +34,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { owner, repo, languages = [], labels = [] } = body;
+  const { owner, repo, languages = [], labels = [], titleQuery } = body;
 
   if (!owner || !repo) {
     return NextResponse.json(
@@ -89,6 +89,7 @@ export async function POST(request: Request) {
         repo,
         languages: JSON.stringify(languages),
         labels: JSON.stringify(labels),
+        titleQuery: titleQuery || null,
         isOwned,
         forkOwner,
       },

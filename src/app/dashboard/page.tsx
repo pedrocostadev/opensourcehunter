@@ -18,6 +18,7 @@ interface WatchedRepo {
   repo: string;
   labels: string;
   languages: string;
+  titleQuery: string | null;
   frozen: boolean;
   createdAt: string;
   _count: {
@@ -120,6 +121,7 @@ export default function DashboardPage() {
     repo: string;
     labels: string;
     languages: string;
+    titleQuery: string | null;
     frozen: boolean;
     createdAt: string;
   }) => {

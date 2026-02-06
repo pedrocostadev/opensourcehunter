@@ -53,6 +53,11 @@ export async function POST() {
             }
           }
 
+          // Title query filter
+          if (watched.titleQuery && !issue.title.toLowerCase().includes(watched.titleQuery.toLowerCase())) {
+            continue;
+          }
+
           // Check if already tracking this issue
           const existingIssue = await prisma.trackedIssue.findUnique({
             where: {
