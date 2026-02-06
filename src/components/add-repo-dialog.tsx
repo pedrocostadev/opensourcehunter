@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Plus, Search, Star, Loader2, User, BookMarked } from "lucide-react";
+import { Plus, Search, Star, Loader2, User, BookMarked, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -61,7 +61,7 @@ export function AddRepoDialog({ onRepoAdded }: AddRepoDialogProps) {
   const [page, setPage] = useState(1);
   const [currentQuery, setCurrentQuery] = useState("");
   const [currentType, setCurrentType] = useState<SearchType>("all");
-  const [selectedRepo, setSelectedRepo] = useState<{ owner: string; repo: string } | null>(null);
+  const [selectedRepo, setSelectedRepo] = useState<SearchResult | null>(null);
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
   const [titleQuery, setTitleQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -147,11 +147,11 @@ export function AddRepoDialog({ onRepoAdded }: AddRepoDialogProps) {
   }, [isLoadingMore, hasMore, page, currentQuery, currentType, fetchResults]);
 
   const selectRepo = (repo: SearchResult) => {
-    const [owner, repoName] = repo.full_name.split("/");
-    setSelectedRepo({ owner, repo: repoName });
-    setSearchQuery(repo.full_name);
-    setSearchResults([]);
-    setHasMore(false);
+    if (selectedRepo?.id === repo.id) {
+      setSelectedRepo(null);
+    } else {
+      setSelectedRepo(repo);
+    }
   };
 
   const toggleLabel = (label: string) => {
@@ -165,10 +165,13 @@ export function AddRepoDialog({ onRepoAdded }: AddRepoDialogProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    let repoToAdd = selectedRepo;
+    let repoToAdd: { owner: string; repo: string } | null = null;
 
-    // If no repo selected from search, try to parse the input
-    if (!repoToAdd) {
+    if (selectedRepo) {
+      const [owner, repoName] = selectedRepo.full_name.split("/");
+      repoToAdd = { owner, repo: repoName };
+    } else {
+      // If no repo selected from search, try to parse the input
       const patterns = [
         /^([^/]+)\/([^/]+)$/,
         /github\.com\/([^/]+)\/([^/]+)/,
@@ -243,7 +246,7 @@ export function AddRepoDialog({ onRepoAdded }: AddRepoDialogProps) {
           Add Repository
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[640px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Add Repository to Watch</DialogTitle>
@@ -287,8 +290,8 @@ export function AddRepoDialog({ onRepoAdded }: AddRepoDialogProps) {
                 <Input
                   id="repo"
                   placeholder={
-                    searchType === "owner" 
-                      ? "Enter owner/org name (e.g., vercel)…" 
+                    searchType === "owner"
+                      ? "Enter owner/org name (e.g., vercel)…"
                       : searchType === "name"
                       ? "Enter repository name…"
                       : "Search or use @owner (e.g., @vercel)…"
@@ -307,50 +310,65 @@ export function AddRepoDialog({ onRepoAdded }: AddRepoDialogProps) {
                   <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" aria-hidden="true" />
                 )}
               </div>
-              <div 
+              <div
                 ref={resultsContainerRef}
                 onScroll={handleScroll}
                 className="h-[200px] rounded-md border bg-popover overflow-y-auto"
               >
-                {searchResults.length === 0 ? (
+                {isSearching ? (
+                  <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
+                    <Loader2 className="h-8 w-8 mb-2 animate-spin opacity-50" aria-hidden="true" />
+                    <p className="text-sm">Searching…</p>
+                  </div>
+                ) : searchResults.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
                     <Search className="h-8 w-8 mb-2 opacity-50" aria-hidden="true" />
                     <p className="text-sm">Type to search repositories…</p>
                   </div>
                 ) : (
                   <>
-                    {searchResults.map((repo) => (
-                      <button
-                        key={repo.id}
-                        type="button"
-                        className="flex w-full items-start gap-3 p-3 text-left hover:bg-accent transition-colors border-b last:border-b-0"
-                        onClick={() => selectRepo(repo)}
-                      >
-                        <img
-                          src={repo.owner.avatar_url}
-                          alt=""
-                          aria-hidden="true"
-                          width={32}
-                          height={32}
-                          className="h-8 w-8 rounded-full"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-sm truncate">{repo.full_name}</div>
-                          {repo.description && (
-                            <div className="text-xs text-muted-foreground line-clamp-2">
-                              {repo.description}
+                    {searchResults.map((repo) => {
+                      const isSelected = selectedRepo?.id === repo.id;
+                      return (
+                        <button
+                          key={repo.id}
+                          type="button"
+                          className={`flex w-full items-start gap-3 p-3 text-left transition-colors border-b last:border-b-0 ${
+                            isSelected
+                              ? "bg-primary/5 ring-1 ring-inset ring-primary/20"
+                              : "hover:bg-accent"
+                          }`}
+                          onClick={() => selectRepo(repo)}
+                        >
+                          <img
+                            src={repo.owner.avatar_url}
+                            alt=""
+                            aria-hidden="true"
+                            width={32}
+                            height={32}
+                            className="h-8 w-8 rounded-full shrink-0"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-sm truncate">{repo.full_name}</div>
+                            {repo.description && (
+                              <div className="text-xs text-muted-foreground line-clamp-2">
+                                {repo.description}
+                              </div>
+                            )}
+                            <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <Star className="h-3 w-3" aria-hidden="true" />
+                                {repo.stargazers_count.toLocaleString()}
+                              </span>
+                              {repo.language && <span>{repo.language}</span>}
                             </div>
-                          )}
-                          <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <Star className="h-3 w-3" aria-hidden="true" />
-                              {repo.stargazers_count.toLocaleString()}
-                            </span>
-                            {repo.language && <span>{repo.language}</span>}
                           </div>
-                        </div>
-                      </button>
-                    ))}
+                          {isSelected && (
+                            <Check className="h-5 w-5 shrink-0 text-green-600 mt-0.5" aria-hidden="true" />
+                          )}
+                        </button>
+                      );
+                    })}
                     {isLoadingMore && (
                       <div className="flex items-center justify-center p-3">
                         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" aria-hidden="true" />
