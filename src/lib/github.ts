@@ -56,22 +56,21 @@ export async function forkRepository(
 ): Promise<{ forkOwner: string; forkRepo: string }> {
   const octokit = await getUserOctokit(userId);
 
-  // Check if fork already exists
+  // Check if fork already exists (may have a different name than the original)
   const username = await getGitHubUsername(userId);
-  
+
   try {
-    // Try to get existing fork
-    const { data: existingFork } = await octokit.rest.repos.get({
-      owner: username,
+    const { data: forks } = await octokit.rest.repos.listForks({
+      owner,
       repo,
+      per_page: 100,
     });
-    
-    // Check if it's actually a fork of the target repo
-    if (existingFork.fork && existingFork.parent?.full_name === `${owner}/${repo}`) {
-      return { forkOwner: username, forkRepo: repo };
+    const existingFork = forks.find((f) => f.owner.login === username);
+    if (existingFork) {
+      return { forkOwner: username, forkRepo: existingFork.name };
     }
   } catch {
-    // Fork doesn't exist, create it
+    // Could not check forks, will try to create
   }
 
   // Create the fork

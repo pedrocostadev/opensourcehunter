@@ -97,6 +97,7 @@ model WatchedRepo {
   frozen    Boolean  @default(false)
   isOwned   Boolean  @default(false) // True if user owns the repo (no fork needed)
   forkOwner String?  // If forked, the owner of the fork (user's GitHub username)
+  forkRepo  String?  // If forked, the repo name on the fork (may differ from original)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

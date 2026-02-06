@@ -122,7 +122,8 @@ export async function assignIssueToCopilot(
   repo: string,
   issueNumber: number,
   isOwned: boolean,
-  forkOwner: string | null
+  forkOwner: string | null,
+  forkRepo: string | null
 ): Promise<{ success: boolean; forkIssueNumber?: number }> {
   const octokit = await getUserOctokit(userId);
 
@@ -163,12 +164,21 @@ export async function assignIssueToCopilot(
       return { success: true };
     } else if (forkOwner) {
       // User doesn't own the repo - we need to work on the fork
+      const forkRepoName = forkRepo || repo;
+
       // First check if Copilot is available on the fork
-      const copilotId = await getCopilotActorId(octokit, forkOwner, repo);
+      const copilotId = await getCopilotActorId(octokit, forkOwner, forkRepoName);
       if (!copilotId) {
-        console.error(`Copilot coding agent is not available in fork ${forkOwner}/${repo}`);
+        console.error(`Copilot coding agent is not available in fork ${forkOwner}/${forkRepoName}`);
         return { success: false };
       }
+
+      // Ensure issues are enabled on the fork (disabled by default on forks)
+      await octokit.rest.repos.update({
+        owner: forkOwner,
+        repo: forkRepoName,
+        has_issues: true,
+      });
 
       // Get the original issue details
       const { data: originalIssue } = await octokit.rest.issues.get({
@@ -180,7 +190,7 @@ export async function assignIssueToCopilot(
       // Create a corresponding issue on the fork that references the original
       const { data: forkIssue } = await octokit.rest.issues.create({
         owner: forkOwner,
-        repo,
+        repo: forkRepoName,
         title: `[Upstream #${issueNumber}] ${originalIssue.title}`,
         body: `This issue tracks the fix for upstream issue: ${originalIssue.html_url}\n\n---\n\n${originalIssue.body || "No description provided."}`,
         labels: originalIssue.labels
@@ -189,7 +199,7 @@ export async function assignIssueToCopilot(
       });
 
       // Get the fork issue node ID
-      const forkIssueId = await getIssueNodeId(octokit, forkOwner, repo, forkIssue.number);
+      const forkIssueId = await getIssueNodeId(octokit, forkOwner, forkRepoName, forkIssue.number);
       if (!forkIssueId) {
         console.error(`Could not get node ID for fork issue #${forkIssue.number}`);
         return { success: false };
@@ -213,7 +223,7 @@ export async function assignIssueToCopilot(
         }
       );
 
-      console.log(`Created fork issue #${forkIssue.number} and assigned to Copilot in ${forkOwner}/${repo}`);
+      console.log(`Created fork issue #${forkIssue.number} and assigned to Copilot in ${forkOwner}/${forkRepoName}`);
       return { success: true, forkIssueNumber: forkIssue.number };
     } else {
       console.error("Cannot assign Copilot: no fork available for non-owned repo");
@@ -235,6 +245,7 @@ export async function checkCopilotPRStatus(
   issueNumber: number,
   isOwned: boolean,
   forkOwner: string | null,
+  forkRepo: string | null,
   forkIssueNumber: number | null
 ): Promise<{ hasPR: boolean; prNumber?: number; prUrl?: string; prOwner?: string; isDraft?: boolean }> {
   const octokit = await getUserOctokit(userId);
@@ -248,9 +259,11 @@ export async function checkCopilotPRStatus(
       }
       return result;
     } else if (forkOwner) {
+      const forkRepoName = forkRepo || repo;
+
       // For forked repos, check the fork issue timeline if we have the fork issue number
       if (forkIssueNumber) {
-        const result = await checkTimelineForCopilotPR(octokit, forkOwner, repo, forkIssueNumber);
+        const result = await checkTimelineForCopilotPR(octokit, forkOwner, forkRepoName, forkIssueNumber);
         if (result.hasPR) {
           return { ...result, prOwner: forkOwner };
         }
@@ -259,7 +272,7 @@ export async function checkCopilotPRStatus(
       // Also check for PRs on the fork that mention the upstream issue
       const { data: prs } = await octokit.rest.pulls.list({
         owner: forkOwner,
-        repo,
+        repo: forkRepoName,
         state: "all",
         per_page: 30,
       });
@@ -385,7 +398,8 @@ export async function triggerCopilotAutoFix(
       trackedIssue.watchedRepo.repo,
       trackedIssue.issueNumber,
       trackedIssue.watchedRepo.isOwned,
-      trackedIssue.watchedRepo.forkOwner
+      trackedIssue.watchedRepo.forkOwner,
+      trackedIssue.watchedRepo.forkRepo
     );
 
     if (!result.success) {
@@ -453,6 +467,7 @@ export async function pollCopilotPRStatus(
     trackedIssue.issueNumber,
     trackedIssue.watchedRepo.isOwned,
     trackedIssue.watchedRepo.forkOwner,
+    trackedIssue.watchedRepo.forkRepo,
     trackedIssue.forkIssueNumber
   );
 

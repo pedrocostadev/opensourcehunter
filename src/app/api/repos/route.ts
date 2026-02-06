@@ -57,12 +57,14 @@ export async function POST(request: Request) {
     const { isOwned } = await checkRepoOwnership(session.user.id, owner, repo);
 
     let forkOwner: string | null = null;
+    let forkRepo: string | null = null;
 
     if (!isOwned) {
       // User doesn't own the repo - need to fork it for Copilot to create PRs
       try {
         const fork = await forkRepository(session.user.id, owner, repo);
         forkOwner = fork.forkOwner;
+        forkRepo = fork.forkRepo;
       } catch (error) {
         console.error("Failed to fork repository:", error);
         return NextResponse.json(
@@ -92,6 +94,7 @@ export async function POST(request: Request) {
         titleQuery: titleQuery || null,
         isOwned,
         forkOwner,
+        forkRepo,
       },
     });
 
