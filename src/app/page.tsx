@@ -1,9 +1,14 @@
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Github, Zap, Bell, GitPullRequest } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/layout/navbar";
+import { authOptions } from "@/lib/auth";
 
-export default function Home() {
+export default async function Home() {
+  const session = await getServerSession(authOptions);
+  if (session) redirect("/dashboard");
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
