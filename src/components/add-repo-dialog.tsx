@@ -241,7 +241,7 @@ export function AddRepoDialog({ onRepoAdded }: AddRepoDialogProps) {
       if (!isOpen) resetDialog();
     }}>
       <DialogTrigger asChild>
-        <Button>
+        <Button className="w-[152px]" size="sm">
           <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
           Add Repository
         </Button>

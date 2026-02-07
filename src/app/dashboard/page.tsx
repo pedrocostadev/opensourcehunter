@@ -179,10 +179,11 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={syncIssues} 
+            <Button
+              className="w-[152px]"
+              variant="outline"
+              size="sm"
+              onClick={syncIssues}
               disabled={isSyncing || repos.length === 0}
             >
               <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? "animate-spin" : ""}`} />
