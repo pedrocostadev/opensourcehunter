@@ -1,13 +1,13 @@
 import webpush from "web-push";
 
 if (
-  process.env.VAPID_PUBLIC_KEY &&
+  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY &&
   process.env.VAPID_PRIVATE_KEY &&
   process.env.VAPID_EMAIL
 ) {
   webpush.setVapidDetails(
     `mailto:${process.env.VAPID_EMAIL}`,
-    process.env.VAPID_PUBLIC_KEY,
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
     process.env.VAPID_PRIVATE_KEY
   );
 }
@@ -23,7 +23,7 @@ export async function sendPushNotification(
   subscription: webpush.PushSubscription,
   payload: PushPayload
 ) {
-  if (!process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) {
+  if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) {
     console.warn("VAPID keys not set, skipping push notification");
     return null;
   }
