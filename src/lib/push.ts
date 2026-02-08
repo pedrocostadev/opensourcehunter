@@ -49,10 +49,12 @@ export function newIssuePushPayload(
   repo: string,
   issueNumber: number,
   issueTitle: string,
-  issueUrl: string
+  issueUrl: string,
+  type: "issue" | "pull_request" = "issue"
 ): PushPayload {
+  const itemType = type === "pull_request" ? "pull request" : "issue";
   return {
-    title: `New issue in ${owner}/${repo}`,
+    title: `New ${itemType} in ${owner}/${repo}`,
     body: `#${issueNumber} - ${issueTitle}`,
     url: issueUrl,
     icon: "/icon-192.png",

@@ -114,6 +114,7 @@ model TrackedIssue {
   title           String
   url             String
   labels          String    // JSON array
+  type            String    @default("issue") // issue | pull_request
   state           String    @default("open") // open | closed
   isRead          Boolean   @default(false)
   claimedAt       DateTime? // User is working on this manually

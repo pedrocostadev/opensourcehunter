@@ -25,12 +25,13 @@ export async function createIssueNotification(
   issueNumber: number,
   issueTitle: string,
   issueId: string,
-  issueUrl?: string
+  issueUrl?: string,
+  type: "issue" | "pull_request" = "issue"
 ) {
-  const url = issueUrl || `https://github.com/${owner}/${repo}/issues/${issueNumber}`;
+  const url = issueUrl || `https://github.com/${owner}/${repo}/${type === "pull_request" ? "pull" : "issues"}/${issueNumber}`;
   return dispatchIssueNotification(
     { userId, issueId },
-    { owner, repo, issueNumber, issueTitle, issueUrl: url }
+    { owner, repo, issueNumber, issueTitle, issueUrl: url, type }
   );
 }
 

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ExternalLink, Check, X, Clock, Wrench, Eye, RotateCcw, Trash2 } from "lucide-react";
+import { ExternalLink, Check, X, Clock, Wrench, Eye, RotateCcw, Trash2, GitPullRequest, CircleDot } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +14,7 @@ interface TrackedIssue {
   title: string;
   url: string;
   labels: string;
+  type?: string;
   state: string;
   isRead: boolean;
   claimedAt: string | null;
@@ -58,6 +59,7 @@ export function IssueCard({ issue, onUpdate, showArchiveActions = false }: Issue
   const [isLoading, setIsLoading] = useState(false);
   const labels = JSON.parse(issue.labels || "[]") as string[];
   const isClosed = issue.state === "closed";
+  const isPullRequest = issue.type === "pull_request";
 
   const handleClaim = async () => {
     setIsLoading(true);
@@ -179,6 +181,11 @@ export function IssueCard({ issue, onUpdate, showArchiveActions = false }: Issue
                 className={`group flex items-start gap-2 hover:underline ${isClosed ? "line-through text-muted-foreground" : ""}`}
                 onClick={(e) => e.stopPropagation()}
               >
+                {isPullRequest ? (
+                  <GitPullRequest className="h-4 w-4 shrink-0 mt-0.5 text-purple-500" aria-label="Pull Request" />
+                ) : (
+                  <CircleDot className="h-4 w-4 shrink-0 mt-0.5 text-green-500" aria-label="Issue" />
+                )}
                 <span className="shrink-0 text-muted-foreground">#{issue.issueNumber}</span>
                 <span className="line-clamp-2 break-words">{issue.title}</span>
                 <ExternalLink className="h-4 w-4 shrink-0 mt-0.5 opacity-70 group-hover:opacity-100" aria-hidden="true" />
@@ -189,6 +196,9 @@ export function IssueCard({ issue, onUpdate, showArchiveActions = false }: Issue
             </div>
           </div>
           <div className="flex shrink-0 gap-1">
+            {isPullRequest && (
+              <Badge variant="outline" className="border-purple-500/50 text-purple-700 dark:text-purple-400">PR</Badge>
+            )}
             {isClosed && (
               <Badge variant="secondary">Closed</Badge>
             )}
@@ -259,7 +269,7 @@ export function IssueCard({ issue, onUpdate, showArchiveActions = false }: Issue
                 onClick={handleClaim}
                 disabled={isLoading}
               >
-                I'll work on this
+                I&apos;ll work on this
               </Button>
             )}
 
