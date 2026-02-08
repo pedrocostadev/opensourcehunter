@@ -269,7 +269,7 @@ export function IssueCard({ issue, onUpdate, showArchiveActions = false }: Issue
                 onClick={handleClaim}
                 disabled={isLoading}
               >
-                I'll work on this
+                I&apos;ll work on this
               </Button>
             )}
 
