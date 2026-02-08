@@ -52,14 +52,16 @@ export function newIssueEmailTemplate(
   repo: string,
   issueNumber: number,
   issueTitle: string,
-  issueUrl: string
+  issueUrl: string,
+  type: "issue" | "pull_request" = "issue"
 ) {
+  const itemType = type === "pull_request" ? "Pull Request" : "Issue";
   return {
-    subject: `New issue in ${owner}/${repo}: #${issueNumber}`,
+    subject: `New ${itemType.toLowerCase()} in ${owner}/${repo}: #${issueNumber}`,
     html: `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #24292f;">New Issue Detected</h2>
-        <p>A new issue matching your filters was found:</p>
+        <h2 style="color: #24292f;">New ${itemType} Detected</h2>
+        <p>A new ${itemType.toLowerCase()} matching your filters was found:</p>
         <div style="background: #f6f8fa; border-radius: 6px; padding: 16px; margin: 16px 0;">
           <p style="margin: 0 0 8px 0; font-weight: 600;">
             <a href="${issueUrl}" style="color: #0969da; text-decoration: none;">
@@ -70,7 +72,7 @@ export function newIssueEmailTemplate(
         </div>
         <p>
           <a href="${issueUrl}" style="display: inline-block; background: #2da44e; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none;">
-            View Issue
+            View ${itemType}
           </a>
         </p>
         <hr style="border: none; border-top: 1px solid #d0d7de; margin: 24px 0;" />

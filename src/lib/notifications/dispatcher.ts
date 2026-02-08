@@ -21,6 +21,7 @@ interface IssueNotificationData {
   issueNumber: number;
   issueTitle: string;
   issueUrl: string;
+  type?: "issue" | "pull_request";
 }
 
 interface DraftNotificationData {
@@ -54,9 +55,10 @@ export async function dispatchIssueNotification(
   data: IssueNotificationData
 ) {
   const { userId, issueId } = context;
-  const { owner, repo, issueNumber, issueTitle, issueUrl } = data;
+  const { owner, repo, issueNumber, issueTitle, issueUrl, type = "issue" } = data;
 
-  const message = `New issue in ${owner}/${repo}: #${issueNumber} - ${issueTitle}`;
+  const itemType = type === "pull_request" ? "pull request" : "issue";
+  const message = `New ${itemType} in ${owner}/${repo}: #${issueNumber} - ${issueTitle}`;
 
   // Always create in-app notification
   await createInAppNotification(userId, message, issueId);
@@ -75,7 +77,8 @@ export async function dispatchIssueNotification(
       repo,
       issueNumber,
       issueTitle,
-      issueUrl
+      issueUrl,
+      type
     );
     await sendEmail({
       to: user.email,
@@ -93,7 +96,8 @@ export async function dispatchIssueNotification(
         repo,
         issueNumber,
         issueTitle,
-        issueUrl
+        issueUrl,
+        type
       );
       const result = await sendPushNotification(subscription, payload);
 

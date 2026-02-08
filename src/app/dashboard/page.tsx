@@ -32,6 +32,7 @@ interface TrackedIssue {
   title: string;
   url: string;
   labels: string;
+  type: string;
   state: string;
   isRead: boolean;
   claimedAt: string | null;

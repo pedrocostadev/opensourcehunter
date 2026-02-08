@@ -108,6 +108,35 @@ export async function fetchRepoIssues(
   return issues.filter((issue) => !issue.pull_request);
 }
 
+// Fetch pull requests from a repository
+export async function fetchRepoPullRequests(
+  userId: string,
+  owner: string,
+  repo: string,
+  labels?: string[]
+) {
+  const octokit = await getUserOctokit(userId);
+
+  const { data: pulls } = await octokit.rest.pulls.list({
+    owner,
+    repo,
+    state: "open",
+    per_page: 100,
+    sort: "created",
+    direction: "desc",
+  });
+
+  // Filter by labels if provided
+  if (labels && labels.length > 0) {
+    return pulls.filter((pr) => {
+      const prLabels = pr.labels?.map((l) => (typeof l === "string" ? l : l.name)).filter(Boolean) || [];
+      return labels.some((label) => prLabels.includes(label));
+    });
+  }
+
+  return pulls;
+}
+
 // Check if an issue has a linked PR
 export async function issueHasLinkedPR(
   userId: string,
