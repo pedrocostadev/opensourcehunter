@@ -99,18 +99,25 @@ export async function dispatchIssueNotification(
         issueUrl,
         type
       );
+      console.log("Sending issue push to user %s", userId);
       const result = await sendPushNotification(subscription, payload);
 
       // Clear expired subscription
       if (result && "expired" in result && result.expired) {
+        console.log("Push subscription expired for user %s, clearing", userId);
         await prisma.notificationPreferences.update({
           where: { userId },
           data: { pushSubscription: null, pushEnabled: false },
         });
       }
-    } catch {
-      console.error("Failed to parse push subscription");
+    } catch (error) {
+      console.error("Failed to send issue push for user %s:", userId, error);
     }
+  } else {
+    console.log(
+      "Push skipped for user %s: enabled=%s, newIssuePush=%s, hasSubscription=%s",
+      userId, prefs.pushEnabled, prefs.newIssuePush, !!prefs.pushSubscription
+    );
   }
 }
 
@@ -161,17 +168,24 @@ export async function dispatchDraftReadyNotification(
         prNumber,
         draftId
       );
+      console.log("Sending draft-ready push to user %s", userId);
       const result = await sendPushNotification(subscription, payload);
 
       // Clear expired subscription
       if (result && "expired" in result && result.expired) {
+        console.log("Push subscription expired for user %s, clearing", userId);
         await prisma.notificationPreferences.update({
           where: { userId },
           data: { pushSubscription: null, pushEnabled: false },
         });
       }
-    } catch {
-      console.error("Failed to parse push subscription");
+    } catch (error) {
+      console.error("Failed to send draft push for user %s:", userId, error);
     }
+  } else {
+    console.log(
+      "Push skipped for user %s: enabled=%s, draftReadyPush=%s, hasSubscription=%s",
+      userId, prefs.pushEnabled, prefs.draftReadyPush, !!prefs.pushSubscription
+    );
   }
 }

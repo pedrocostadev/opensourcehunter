@@ -23,21 +23,32 @@ export async function sendPushNotification(
   subscription: webpush.PushSubscription,
   payload: PushPayload
 ) {
-  if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) {
-    console.warn("VAPID keys not set, skipping push notification");
+  if (
+    !process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
+    !process.env.VAPID_PRIVATE_KEY ||
+    !process.env.VAPID_EMAIL
+  ) {
+    console.warn(
+      "VAPID not configured, skipping push. Set: PUBLIC_KEY=%s PRIVATE_KEY=%s EMAIL=%s",
+      !!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+      !!process.env.VAPID_PRIVATE_KEY,
+      !!process.env.VAPID_EMAIL
+    );
     return null;
   }
 
+  const endpoint = subscription.endpoint.slice(0, 60) + "...";
   try {
     const result = await webpush.sendNotification(
       subscription,
       JSON.stringify(payload)
     );
+    console.log("Push sent OK to %s (status %d)", endpoint, result.statusCode);
     return result;
   } catch (error) {
-    console.error("Push notification error:", error);
-    if ((error as { statusCode?: number }).statusCode === 410) {
-      // Subscription expired or unsubscribed
+    const statusCode = (error as { statusCode?: number }).statusCode;
+    console.error("Push failed to %s (status %s):", endpoint, statusCode, error);
+    if (statusCode === 410) {
       return { expired: true };
     }
     return null;
