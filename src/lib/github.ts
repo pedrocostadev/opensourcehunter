@@ -1,5 +1,10 @@
 import { Octokit } from "octokit";
 import { prisma } from "./prisma";
+export {
+  parseGitHubPullRequestUrl,
+  resolveDraftPullRequestTarget,
+  type PullRequestTarget,
+} from "./pull-request-target";
 
 // Get user's GitHub access token from the database
 async function getUserOctokit(userId: string): Promise<Octokit> {

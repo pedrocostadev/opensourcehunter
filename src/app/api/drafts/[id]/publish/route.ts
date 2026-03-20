@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { publishDraftPR } from "@/lib/github";
+import { publishDraftPR, resolveDraftPullRequestTarget } from "@/lib/github";
 
 type Params = Promise<{ id: string }>;
 
@@ -40,15 +40,20 @@ export async function POST(
   }
 
   try {
-    // Use the stored PR owner (could be fork owner or original repo owner)
-    const prOwner = draft.draftPrOwner || draft.watchedRepo.owner;
-    
+    const pullRequestTarget = resolveDraftPullRequestTarget({
+      draftPrUrl: draft.draftPrUrl,
+      draftPrOwner: draft.draftPrOwner,
+      draftPrNumber: draft.draftPrNumber,
+      defaultOwner: draft.watchedRepo.owner,
+      defaultRepo: draft.watchedRepo.repo,
+    });
+
     // Publish the draft PR on GitHub
     await publishDraftPR(
       session.user.id,
-      prOwner,
-      draft.watchedRepo.repo,
-      draft.draftPrNumber
+      pullRequestTarget.owner,
+      pullRequestTarget.repo,
+      pullRequestTarget.pullNumber
     );
 
     const updatedIssue = await prisma.trackedIssue.update({

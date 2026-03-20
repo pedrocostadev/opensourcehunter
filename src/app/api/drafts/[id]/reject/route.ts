@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { closeDraftPR } from "@/lib/github";
+import { closeDraftPR, resolveDraftPullRequestTarget } from "@/lib/github";
 
 type Params = Promise<{ id: string }>;
 
@@ -40,16 +40,21 @@ export async function POST(
   }
 
   try {
-    // Use the stored PR owner (could be fork owner or original repo owner)
-    const prOwner = draft.draftPrOwner || draft.watchedRepo.owner;
+    const pullRequestTarget = resolveDraftPullRequestTarget({
+      draftPrUrl: draft.draftPrUrl,
+      draftPrOwner: draft.draftPrOwner,
+      draftPrNumber: draft.draftPrNumber,
+      defaultOwner: draft.watchedRepo.owner,
+      defaultRepo: draft.watchedRepo.repo,
+    });
 
     // Close the draft PR on GitHub; ignore errors if the PR is already closed
     try {
       await closeDraftPR(
         session.user.id,
-        prOwner,
-        draft.watchedRepo.repo,
-        draft.draftPrNumber
+        pullRequestTarget.owner,
+        pullRequestTarget.repo,
+        pullRequestTarget.pullNumber
       );
     } catch (githubError) {
       const status =

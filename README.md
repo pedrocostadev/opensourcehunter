@@ -106,6 +106,8 @@ Open [http://localhost:3000](http://localhost:3000)
 3. Add environment variables
 4. Deploy!
 
+Note: The `vercel-build` script runs `prisma migrate deploy` before `next build`; ensure DATABASE_URL is set for your production database.
+
 ### Post-Deployment
 
 1. Update GitHub OAuth callback URL to your production domain
