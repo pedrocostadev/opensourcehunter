@@ -42,27 +42,44 @@ export async function POST(
   try {
     // Use the stored PR owner (could be fork owner or original repo owner)
     const prOwner = draft.draftPrOwner || draft.watchedRepo.owner;
-    
-    // Close the draft PR on GitHub
-    await closeDraftPR(
-      session.user.id,
-      prOwner,
-      draft.watchedRepo.repo,
-      draft.draftPrNumber
-    );
+
+    // Close the draft PR on GitHub; ignore errors if the PR is already closed
+    try {
+      await closeDraftPR(
+        session.user.id,
+        prOwner,
+        draft.watchedRepo.repo,
+        draft.draftPrNumber
+      );
+    } catch (githubError) {
+      const status =
+        githubError instanceof Error &&
+        "status" in githubError &&
+        typeof (githubError as { status: unknown }).status === "number"
+          ? (githubError as { status: number }).status
+          : null;
+      // 422 means the PR is already closed; proceed with archiving
+      if (status !== 422) {
+        throw githubError;
+      }
+      console.warn(
+        "Draft PR is already closed on GitHub; proceeding with rejection."
+      );
+    }
 
     const updatedIssue = await prisma.trackedIssue.update({
       where: { id },
       data: {
         autoFixStatus: "rejected",
+        archivedAt: new Date(),
       },
     });
 
     return NextResponse.json(updatedIssue);
   } catch (error) {
-    console.error("Failed to close draft PR:", error);
+    console.error("Failed to reject draft:", error);
     return NextResponse.json(
-      { error: "Failed to close PR" },
+      { error: "Failed to reject draft" },
       { status: 500 }
     );
   }
