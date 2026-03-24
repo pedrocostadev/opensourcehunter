@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ExternalLink, MoreVertical, Trash2, Snowflake, Play } from "lucide-react";
+import { ExternalLink, MoreVertical, Trash2, Snowflake, Play, GitPullRequest, GitPullRequestDraft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +22,7 @@ interface WatchedRepo {
   languages: string;
   titleQuery: string | null;
   frozen: boolean;
+  createDraftPr: boolean;
   createdAt: string;
   _count: {
     trackedIssues: number;
@@ -37,6 +38,7 @@ interface RepoCardProps {
 export function RepoCard({ repo, onDelete, onUpdate }: RepoCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
+  const [isTogglingDraftPr, setIsTogglingDraftPr] = useState(false);
   const labels = JSON.parse(repo.labels || "[]") as string[];
 
   const handleDelete = async () => {
@@ -78,6 +80,31 @@ export function RepoCard({ repo, onDelete, onUpdate }: RepoCardProps) {
       toast.error("Failed to update repository");
     } finally {
       setIsToggling(false);
+    }
+  };
+
+  const handleToggleCreateDraftPr = async () => {
+    setIsTogglingDraftPr(true);
+    try {
+      const res = await fetch(`/api/repos/${repo.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ createDraftPr: !repo.createDraftPr }),
+      });
+      if (res.ok) {
+        toast.success(
+          repo.createDraftPr
+            ? `Draft PR auto-generation disabled for ${repo.owner}/${repo.repo}`
+            : `Draft PR auto-generation enabled for ${repo.owner}/${repo.repo}`
+        );
+        onUpdate();
+      } else {
+        toast.error("Failed to update repository");
+      }
+    } catch (error) {
+      toast.error("Failed to update repository");
+    } finally {
+      setIsTogglingDraftPr(false);
     }
   };
 
@@ -127,6 +154,23 @@ export function RepoCard({ repo, onDelete, onUpdate }: RepoCardProps) {
                 )}
               </DropdownMenuItem>
               <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={handleToggleCreateDraftPr}
+                disabled={isTogglingDraftPr}
+              >
+                {repo.createDraftPr ? (
+                  <>
+                    <GitPullRequestDraft className="mr-2 h-4 w-4" aria-hidden="true" />
+                    Disable draft PR
+                  </>
+                ) : (
+                  <>
+                    <GitPullRequest className="mr-2 h-4 w-4" aria-hidden="true" />
+                    Enable draft PR
+                  </>
+                )}
+              </DropdownMenuItem>
+              <DropdownMenuItem
                 className="text-destructive cursor-pointer"
                 onClick={handleDelete}
                 disabled={isDeleting}
@@ -156,6 +200,12 @@ export function RepoCard({ repo, onDelete, onUpdate }: RepoCardProps) {
           {repo.titleQuery && (
             <div className="text-sm text-muted-foreground">
               Title: &ldquo;{repo.titleQuery}&rdquo;
+            </div>
+          )}
+          {!repo.createDraftPr && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <GitPullRequestDraft className="h-3 w-3" aria-hidden="true" />
+              Draft PR auto-generation disabled
             </div>
           )}
         </div>

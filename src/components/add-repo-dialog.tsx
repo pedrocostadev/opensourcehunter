@@ -43,6 +43,7 @@ interface CreatedRepo {
   languages: string;
   titleQuery: string | null;
   frozen: boolean;
+  createDraftPr: boolean;
   createdAt: string;
 }
 
@@ -64,6 +65,7 @@ export function AddRepoDialog({ onRepoAdded }: AddRepoDialogProps) {
   const [selectedRepo, setSelectedRepo] = useState<SearchResult | null>(null);
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
   const [titleQuery, setTitleQuery] = useState("");
+  const [createDraftPr, setCreateDraftPr] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
   const resultsContainerRef = useRef<HTMLDivElement>(null);
@@ -202,6 +204,7 @@ export function AddRepoDialog({ onRepoAdded }: AddRepoDialogProps) {
           labels: selectedLabels,
           languages: [],
           titleQuery: titleQuery.trim() || undefined,
+          createDraftPr,
         }),
       });
 
@@ -230,6 +233,7 @@ export function AddRepoDialog({ onRepoAdded }: AddRepoDialogProps) {
     setSelectedRepo(null);
     setSelectedLabels([]);
     setTitleQuery("");
+    setCreateDraftPr(true);
     setHasMore(false);
     setPage(1);
     setSearchType("all");
@@ -411,6 +415,32 @@ export function AddRepoDialog({ onRepoAdded }: AddRepoDialogProps) {
               <p className="text-xs text-muted-foreground">
                 Only issues whose title contains this text will be tracked
               </p>
+            </div>
+            <div className="flex items-start gap-3">
+              <button
+                id="createDraftPr"
+                type="button"
+                role="switch"
+                aria-checked={createDraftPr}
+                onClick={() => setCreateDraftPr((prev) => !prev)}
+                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+                  createDraftPr ? "bg-primary" : "bg-input"
+                }`}
+              >
+                <span
+                  className={`pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform ${
+                    createDraftPr ? "translate-x-4" : "translate-x-0"
+                  }`}
+                />
+              </button>
+              <div className="grid gap-1">
+                <Label htmlFor="createDraftPr" className="cursor-pointer">
+                  Auto-generate draft PR
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Automatically assign new issues to GitHub Copilot to create a draft PR
+                </p>
+              </div>
             </div>
           </div>
           <DialogFooter>
