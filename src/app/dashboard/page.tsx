@@ -20,6 +20,7 @@ interface WatchedRepo {
   languages: string;
   titleQuery: string | null;
   frozen: boolean;
+  createDraftPr: boolean;
   createdAt: string;
   _count: {
     trackedIssues: number;
@@ -124,6 +125,7 @@ export default function DashboardPage() {
     languages: string;
     titleQuery: string | null;
     frozen: boolean;
+    createDraftPr: boolean;
     createdAt: string;
   }) => {
     setRepos((prev) => [{ ...repo, _count: { trackedIssues: 0 } }, ...prev]);

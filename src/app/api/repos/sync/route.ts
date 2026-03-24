@@ -94,7 +94,7 @@ export async function POST() {
               url: issue.html_url,
               labels: JSON.stringify(issueLabels),
               type: "issue",
-              autoFixStatus: "queued",
+              autoFixStatus: watched.createDraftPr ? "queued" : "skipped",
               notifiedAt: new Date(),
             },
           });
@@ -113,12 +113,14 @@ export async function POST() {
             "issue"
           );
 
-          // Trigger Copilot auto-fix (awaited before response)
-          autofixTriggers.push(
-            triggerCopilotAutoFix(trackedIssue.id).catch((error) => {
-              console.error("Failed to trigger Copilot auto-fix:", error);
-            })
-          );
+          // Trigger Copilot auto-fix only if createDraftPr is enabled
+          if (watched.createDraftPr) {
+            autofixTriggers.push(
+              triggerCopilotAutoFix(trackedIssue.id).catch((error) => {
+                console.error("Failed to trigger Copilot auto-fix:", error);
+              })
+            );
+          }
         }
 
         // Fetch recent pull requests
