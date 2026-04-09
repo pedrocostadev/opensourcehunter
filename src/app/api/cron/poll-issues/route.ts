@@ -97,6 +97,8 @@ export async function GET(request: Request) {
               continue;
             }
 
+            const skipCopilot = watched.prMode === "notify";
+
             // Create tracked issue
             const trackedIssue = await prisma.trackedIssue.create({
               data: {
@@ -106,7 +108,7 @@ export async function GET(request: Request) {
                 url: issue.html_url,
                 labels: JSON.stringify(issueLabels),
                 type: "issue",
-                autoFixStatus: "queued",
+                autoFixStatus: skipCopilot ? "skipped" : "queued",
                 notifiedAt: new Date(),
               },
             });
@@ -126,11 +128,13 @@ export async function GET(request: Request) {
             );
 
             // Trigger Copilot auto-fix (awaited before response)
-            autofixTriggers.push(
-              triggerCopilotAutoFix(trackedIssue.id).catch((error) => {
-                console.error("Failed to trigger Copilot auto-fix:", error);
-              })
-            );
+            if (!skipCopilot) {
+              autofixTriggers.push(
+                triggerCopilotAutoFix(trackedIssue.id).catch((error) => {
+                  console.error("Failed to trigger Copilot auto-fix:", error);
+                })
+              );
+            }
           }
         }
 

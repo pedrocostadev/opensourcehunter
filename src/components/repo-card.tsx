@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ExternalLink, MoreVertical, Trash2, Snowflake, Play } from "lucide-react";
+import { ExternalLink, MoreVertical, Trash2, Snowflake, Play, Bell, FileEdit, Rocket, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
@@ -22,6 +24,7 @@ interface WatchedRepo {
   languages: string;
   titleQuery: string | null;
   frozen: boolean;
+  prMode: string;
   createdAt: string;
   _count: {
     trackedIssues: number;
@@ -37,7 +40,30 @@ interface RepoCardProps {
 export function RepoCard({ repo, onDelete, onUpdate }: RepoCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
+  const [isChangingMode, setIsChangingMode] = useState(false);
   const labels = JSON.parse(repo.labels || "[]") as string[];
+
+  const handlePrModeChange = async (mode: string) => {
+    setIsChangingMode(true);
+    try {
+      const res = await fetch(`/api/repos/${repo.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prMode: mode }),
+      });
+      if (res.ok) {
+        const modeLabel = mode === "notify" ? "Notify only" : mode === "draft" ? "Draft PR" : "Auto-publish";
+        toast.success(`PR mode set to ${modeLabel}`);
+        onUpdate();
+      } else {
+        toast.error("Failed to update PR mode");
+      }
+    } catch {
+      toast.error("Failed to update PR mode");
+    } finally {
+      setIsChangingMode(false);
+    }
+  };
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -102,6 +128,11 @@ export function RepoCard({ repo, onDelete, onUpdate }: RepoCardProps) {
               Paused
             </Badge>
           )}
+          <Badge variant="outline" className="gap-1">
+            {repo.prMode === "notify" && <><Bell className="h-3 w-3" aria-hidden="true" />Notify</>}
+            {repo.prMode === "draft" && <><FileEdit className="h-3 w-3" aria-hidden="true" />Draft</>}
+            {repo.prMode === "publish" && <><Rocket className="h-3 w-3" aria-hidden="true" />Auto</>}
+          </Badge>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" aria-label="Repository options">
@@ -109,6 +140,35 @@ export function RepoCard({ repo, onDelete, onUpdate }: RepoCardProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuLabel className="text-xs text-muted-foreground">PR mode</DropdownMenuLabel>
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => handlePrModeChange("notify")}
+                disabled={isChangingMode || repo.prMode === "notify"}
+              >
+                <Bell className="mr-2 h-4 w-4" aria-hidden="true" />
+                Notify only
+                {repo.prMode === "notify" && <Check className="ml-auto h-4 w-4" />}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => handlePrModeChange("draft")}
+                disabled={isChangingMode || repo.prMode === "draft"}
+              >
+                <FileEdit className="mr-2 h-4 w-4" aria-hidden="true" />
+                Draft PR
+                {repo.prMode === "draft" && <Check className="ml-auto h-4 w-4" />}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => handlePrModeChange("publish")}
+                disabled={isChangingMode || repo.prMode === "publish"}
+              >
+                <Rocket className="mr-2 h-4 w-4" aria-hidden="true" />
+                Auto-publish
+                {repo.prMode === "publish" && <Check className="ml-auto h-4 w-4" />}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="cursor-pointer"
                 onClick={handleToggleFreeze}

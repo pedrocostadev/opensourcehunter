@@ -1,6 +1,7 @@
 import { Octokit } from "octokit";
 import { prisma } from "./prisma";
 import { createDraftReadyNotification } from "./notifications";
+import { publishDraftPR, resolveDraftPullRequestTarget } from "./github";
 
 // Get user's GitHub access token from the database
 async function getUserOctokit(userId: string): Promise<Octokit> {
@@ -472,15 +473,57 @@ export async function pollCopilotPRStatus(
   );
 
   if (status.hasPR && status.prNumber) {
-    await prisma.trackedIssue.update({
-      where: { id: trackedIssueId },
-      data: {
-        autoFixStatus: "draft_ready",
-        draftPrNumber: status.prNumber,
-        draftPrUrl: status.prUrl,
-        draftPrOwner: status.prOwner,
-      },
-    });
+    const shouldAutoPublish = trackedIssue.watchedRepo.prMode === "publish";
+
+    if (shouldAutoPublish) {
+      // Auto-publish: mark ready for review immediately
+      try {
+        const target = resolveDraftPullRequestTarget({
+          draftPrUrl: status.prUrl ?? null,
+          draftPrOwner: status.prOwner ?? null,
+          draftPrNumber: status.prNumber,
+          defaultOwner: trackedIssue.watchedRepo.owner,
+          defaultRepo: trackedIssue.watchedRepo.repo,
+        });
+        await publishDraftPR(
+          trackedIssue.watchedRepo.userId,
+          target.owner,
+          target.repo,
+          target.pullNumber
+        );
+        await prisma.trackedIssue.update({
+          where: { id: trackedIssueId },
+          data: {
+            autoFixStatus: "published",
+            draftPrNumber: status.prNumber,
+            draftPrUrl: status.prUrl,
+            draftPrOwner: status.prOwner,
+            publishedAt: new Date(),
+          },
+        });
+      } catch (error) {
+        console.error("Auto-publish failed, falling back to draft_ready:", error);
+        await prisma.trackedIssue.update({
+          where: { id: trackedIssueId },
+          data: {
+            autoFixStatus: "draft_ready",
+            draftPrNumber: status.prNumber,
+            draftPrUrl: status.prUrl,
+            draftPrOwner: status.prOwner,
+          },
+        });
+      }
+    } else {
+      await prisma.trackedIssue.update({
+        where: { id: trackedIssueId },
+        data: {
+          autoFixStatus: "draft_ready",
+          draftPrNumber: status.prNumber,
+          draftPrUrl: status.prUrl,
+          draftPrOwner: status.prOwner,
+        },
+      });
+    }
 
     // Create notification for draft ready (dispatches to all enabled channels)
     await createDraftReadyNotification(

@@ -51,7 +51,7 @@ export async function PATCH(
   }
 
   const body = await request.json();
-  const { languages, labels, frozen, titleQuery } = body;
+  const { languages, labels, frozen, titleQuery, prMode } = body;
 
   const updatedRepo = await prisma.watchedRepo.update({
     where: { id },
@@ -59,6 +59,7 @@ export async function PATCH(
       ...(languages !== undefined && { languages: JSON.stringify(languages) }),
       ...(labels !== undefined && { labels: JSON.stringify(labels) }),
       ...(frozen !== undefined && { frozen }),
+      ...(prMode !== undefined && { prMode }),
       ...(titleQuery !== undefined && { titleQuery: titleQuery || null }),
     },
   });

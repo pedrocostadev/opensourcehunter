@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Plus, Search, Star, Loader2, User, BookMarked, Check } from "lucide-react";
+import { Plus, Search, Star, Loader2, User, BookMarked, Check, Bell, FileEdit, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -43,6 +43,7 @@ interface CreatedRepo {
   languages: string;
   titleQuery: string | null;
   frozen: boolean;
+  prMode: string;
   createdAt: string;
 }
 
@@ -64,6 +65,7 @@ export function AddRepoDialog({ onRepoAdded }: AddRepoDialogProps) {
   const [selectedRepo, setSelectedRepo] = useState<SearchResult | null>(null);
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
   const [titleQuery, setTitleQuery] = useState("");
+  const [prMode, setPrMode] = useState<"notify" | "draft" | "publish">("draft");
   const [isLoading, setIsLoading] = useState(false);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
   const resultsContainerRef = useRef<HTMLDivElement>(null);
@@ -202,6 +204,7 @@ export function AddRepoDialog({ onRepoAdded }: AddRepoDialogProps) {
           labels: selectedLabels,
           languages: [],
           titleQuery: titleQuery.trim() || undefined,
+          prMode,
         }),
       });
 
@@ -230,6 +233,7 @@ export function AddRepoDialog({ onRepoAdded }: AddRepoDialogProps) {
     setSelectedRepo(null);
     setSelectedLabels([]);
     setTitleQuery("");
+    setPrMode("draft");
     setHasMore(false);
     setPage(1);
     setSearchType("all");
@@ -410,6 +414,43 @@ export function AddRepoDialog({ onRepoAdded }: AddRepoDialogProps) {
               />
               <p className="text-xs text-muted-foreground">
                 Only issues whose title contains this text will be tracked
+              </p>
+            </div>
+            <div className="grid gap-2">
+              <Label>PR mode</Label>
+              <div className="flex gap-1">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={prMode === "notify" ? "default" : "outline"}
+                  onClick={() => setPrMode("notify")}
+                >
+                  <Bell className="h-3 w-3 mr-1" aria-hidden="true" />
+                  Notify only
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={prMode === "draft" ? "default" : "outline"}
+                  onClick={() => setPrMode("draft")}
+                >
+                  <FileEdit className="h-3 w-3 mr-1" aria-hidden="true" />
+                  Draft PR
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={prMode === "publish" ? "default" : "outline"}
+                  onClick={() => setPrMode("publish")}
+                >
+                  <Rocket className="h-3 w-3 mr-1" aria-hidden="true" />
+                  Auto-publish
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {prMode === "notify" && "Just track issues and send notifications, no Copilot PRs"}
+                {prMode === "draft" && "Copilot creates draft PRs for you to review before publishing"}
+                {prMode === "publish" && "Copilot creates PRs and publishes them automatically"}
               </p>
             </div>
           </div>
