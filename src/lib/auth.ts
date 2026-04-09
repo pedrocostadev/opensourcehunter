@@ -14,6 +14,7 @@ export const authOptions: NextAuthOptions = {
           scope: "read:user user:email repo",
         },
       },
+      issuer: "https://github.com",
     }),
   ],
   callbacks: {
